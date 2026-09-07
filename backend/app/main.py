@@ -1,10 +1,15 @@
 from fastapi import FastAPI
 
 from app.core.database import Base, engine
-from app.models.user import User
-
-
-Base.metadata.create_all(bind=engine)
+from app.models import (
+    User,
+    Driver,
+    Ride,
+    Payment,
+    Rating,
+)
+ 
+from app.routers.auth import router as auth_router
 
 
 app = FastAPI(
@@ -12,6 +17,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.include_router(auth_router)
+Base.metadata.create_all(bind=engine)
+
+ 
 
 @app.get("/")
 async def root():
