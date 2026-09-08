@@ -1,3 +1,4 @@
+from app.models import ride
 from fastapi import HTTPException, status
 
 from app.models.ride import Ride
@@ -5,7 +6,7 @@ from app.repositories.ride_repository import RideRepository
 from app.schemas.ride import RideCreate
 from app.services.fare_service import FareService
 from app.services.location_service import LocationService
-
+from app.core.constants import RideStatus
 
 class RideService:
 
@@ -73,3 +74,55 @@ class RideService:
             ride=ride,
             driver_id=driver_id,
         )
+
+    async def update_status(
+    self,
+    ride_id: int,
+    new_status: str,
+):
+
+        ride = self.repository.get_by_id(ride_id)
+
+        if not ride:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ride not found",
+            )
+
+        allowed_transitions = {
+            RideStatus.SEARCHING: [
+                RideStatus.ACCEPTED,
+                RideStatus.CANCELLED,
+            ],
+            RideStatus.ACCEPTED: [
+                RideStatus.ARRIVING,
+                RideStatus.CANCELLED,
+            ],
+            RideStatus.ARRIVING: [
+                RideStatus.ARRIVED,
+                RideStatus.CANCELLED,
+            ],
+            RideStatus.ARRIVED: [
+                RideStatus.STARTED,
+            ],
+            RideStatus.STARTED: [
+                RideStatus.COMPLETED,
+            ],
+        }
+
+        if new_status not in allowed_transitions.get(
+            ride.status,
+            [],
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot change ride from "
+                    f"{ride.status} to {new_status}",
+            )
+
+        ride.status = new_status
+
+        self.repository.db.commit()
+        self.repository.db.refresh(ride)
+
+        return ride
