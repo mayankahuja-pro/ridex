@@ -10,7 +10,7 @@ from app.services.ride_service import RideService
 from app.services.driver_service import DriverService
 from app.websocket.manager import manager
 from app.core.constants import RideStatus
-
+ 
 router = APIRouter(
     prefix="/rides",
     tags=["Rides"],
@@ -85,7 +85,7 @@ async def accept_ride(
     "/{ride_id}/status",
     response_model=RideResponse,
 )
-def update_ride_status(
+async def update_ride_status(
     ride_id: int,
     new_status: str,
     current_user: User = Depends(
@@ -95,7 +95,18 @@ def update_ride_status(
 ):
     service = RideService(db)
 
-    return service.update_status(
+    ride = await service.update_status(
         ride_id=ride_id,
         new_status=new_status,
     )
+
+    await manager.send_to_user(
+        ride.customer_id,
+        {
+            "type": "ride_status",
+            "ride_id": ride.id,
+            "status": ride.status,
+        },
+    )
+
+    return ride
