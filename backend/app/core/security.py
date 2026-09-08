@@ -6,6 +6,9 @@ from jose import jwt
 
 from app.core.config import settings
 
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+
 
 password_hasher = PasswordHasher()
 
@@ -43,3 +46,4 @@ def create_access_token(user_id: int, role: str) -> str:
         settings.SECRET_KEY,
         algorithm=settings.ALGORITHM,
     )
+
