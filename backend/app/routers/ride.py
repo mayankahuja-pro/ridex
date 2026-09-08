@@ -7,6 +7,8 @@ from app.models.user import User
 from app.schemas.ride import RideCreate, RideResponse
 from app.services.ride_service import RideService
 from app.services.driver_service import DriverService
+from app.websocket.manager import manager
+
 
 router = APIRouter(
     prefix="/rides",

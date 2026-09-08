@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.routers.driver import router as driver_router
 from app.routers.auth import router as auth_router
 from app.routers.ride import router as ride_router
+from app.routers.websocket import router as websocket_router
 
 
 from app.core.database import Base, engine
@@ -23,6 +24,7 @@ app = FastAPI(
 app.include_router(ride_router)
 app.include_router(auth_router)
 app.include_router(driver_router)
+app.include_router(websocket_router)
 Base.metadata.create_all(bind=engine)
 
  
