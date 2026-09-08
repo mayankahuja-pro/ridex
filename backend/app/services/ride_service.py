@@ -48,3 +48,28 @@ class RideService:
         )
 
         return self.repository.create(ride)
+
+    def accept_ride(
+    self,
+    ride_id: int,
+    driver_id: int,
+):
+
+        ride = self.repository.get_by_id(ride_id)
+
+        if not ride:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ride not found",
+            )
+
+        if ride.status != "searching":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ride is no longer available",
+            )
+
+        return self.repository.assign_driver(
+            ride=ride,
+            driver_id=driver_id,
+        )

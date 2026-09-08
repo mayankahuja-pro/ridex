@@ -6,7 +6,7 @@ from app.core.dependencies import require_role
 from app.models.user import User
 from app.schemas.ride import RideCreate, RideResponse
 from app.services.ride_service import RideService
-
+from app.services.driver_service import DriverService
 
 router = APIRouter(
     prefix="/rides",
@@ -32,4 +32,29 @@ def create_ride(
     return service.create_ride(
         customer_id=current_user.id,
         data=data,
+    )
+
+@router.post(
+    "/{ride_id}/accept",
+    response_model=RideResponse,
+)
+def accept_ride(
+    ride_id: int,
+    current_user: User = Depends(
+        require_role("driver")
+    ),
+    db: Session = Depends(get_db),
+):
+
+    driver_service = DriverService(db)
+
+    driver = driver_service.get_driver(
+        current_user.id
+    )
+
+    service = RideService(db)
+
+    return service.accept_ride(
+        ride_id=ride_id,
+        driver_id=driver.id,
     )
