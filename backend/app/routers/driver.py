@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
 from app.models.user import User
-from app.schemas.driver import DriverCreate, DriverResponse
+from app.schemas.driver import DriverCreate, DriverResponse, LocationUpdate
 from app.services.driver_service import DriverService
-
+from app.services.location_service import LocationService
 
 router = APIRouter(
     prefix="/drivers",
@@ -64,3 +64,25 @@ def update_driver_status(
         user_id=current_user.id,
         is_online=is_online,
     )
+
+@router.post("/location")
+def update_location(
+    data: LocationUpdate,
+    current_user: User = Depends(
+        require_role("driver")
+    ),
+    db: Session = Depends(get_db),
+):
+    service = DriverService(db)
+
+    driver = service.get_driver(current_user.id)
+
+    LocationService.update_location(
+        driver_id=driver.id,
+        latitude=data.latitude,
+        longitude=data.longitude,
+    )
+
+    return {
+        "message": "Location updated"
+    }

@@ -16,3 +16,6 @@ class DriverResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+class LocationUpdate(BaseModel):
+    latitude: float
+    longitude: float
