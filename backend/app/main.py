@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from app.routers.driver import router as driver_router
+from app.routers.auth import router as auth_router
 
 from app.core.database import Base, engine
 from app.models import (
@@ -9,7 +11,6 @@ from app.models import (
     Rating,
 )
  
-from app.routers.auth import router as auth_router
 
 
 app = FastAPI(
@@ -18,6 +19,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(driver_router)
 Base.metadata.create_all(bind=engine)
 
  
