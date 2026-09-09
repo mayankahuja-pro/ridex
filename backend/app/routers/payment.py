@@ -1,3 +1,7 @@
+from http.client import HTTPException
+
+from app.models.ride import Ride
+from app.schemas import ride
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -25,10 +29,16 @@ def create_payment(
     ),
     db: Session = Depends(get_db),
 ):
+    ride = db.get(Ride, ride_id)
+    if not ride:
+        raise HTTPException(
+            status_code=404,
+            detail="Ride not found",
+        )
 
     # Temporary/mock amount.
     # Later we'll fetch it from the ride.
-    amount = 280.45
+    amount = ride.fare
 
     service = PaymentService(db)
 
@@ -49,6 +59,19 @@ def payment_success(
     ),
     db: Session = Depends(get_db),
 ):
+    ride = db.get(Ride, ride_id)
+
+    if not ride:
+        raise HTTPException(
+            status_code=404,
+            detail="Ride not found",
+        )
+
+    if ride.customer_id != current_user.id:
+        raise HTTPException(
+            status_code=404,
+            detail="Ride not found",
+        )
 
     service = PaymentService(db)
 

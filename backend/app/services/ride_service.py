@@ -1,3 +1,5 @@
+# from urllib3 import request
+
 from app.models import ride
 from fastapi import HTTPException, status
 
@@ -7,7 +9,7 @@ from app.schemas.ride import RideCreate
 from app.services.fare_service import FareService
 from app.services.location_service import LocationService
 from app.core.constants import RideStatus
-
+from app.core.redis import redis_client
 class RideService:
 
     def __init__(self, db):
@@ -58,6 +60,16 @@ class RideService:
         ride_id: int,
         driver_id: int,
     ):
+        
+        request = redis_client.get(
+        f"ride:{ride_id}:driver:{driver_id}"
+    )
+
+        if not request:
+            raise HTTPException(
+                status_code=400,
+                detail="Ride request expired",
+            )
 
         ride = self.repository.get_for_update(
             ride_id
@@ -78,65 +90,69 @@ class RideService:
         ride.driver_id = driver_id
         ride.status = RideStatus.ACCEPTED
 
+        redis_client.delete(
+        f"ride:{ride_id}:driver:{driver_id}"
+        )
+
         self.repository.db.commit()
         self.repository.db.refresh(ride)
 
         return ride
     
     # api to update the status of a ride 
-def update_status(
-    self,
-    ride_id: int,
-    driver_id: int,
-    new_status: str,
-):
-    ride = self.repository.get_by_id(ride_id)
-
-    if not ride:
-        raise HTTPException(
-            status_code=404,
-            detail="Ride not found",
-        )
-
-    if ride.driver_id != driver_id:
-        raise HTTPException(
-            status_code=403,
-            detail="You are not assigned to this ride",
-        )
-
-    allowed_transitions = {
-        RideStatus.ACCEPTED: [
-            RideStatus.ARRIVING,
-            RideStatus.CANCELLED,
-        ],
-        RideStatus.ARRIVING: [
-            RideStatus.ARRIVED,
-            RideStatus.CANCELLED,
-        ],
-        RideStatus.ARRIVED: [
-            RideStatus.STARTED,
-        ],
-        RideStatus.STARTED: [
-            RideStatus.COMPLETED,
-        ],
-    }
-
-    if new_status not in allowed_transitions.get(
-        ride.status, []
+    def update_status(
+        self,
+        ride_id: int,
+        driver_id: int,
+        new_status: str,
     ):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Cannot change ride from "
-                   f"{ride.status} to {new_status}",
-        )
+        ride = self.repository.get_by_id(ride_id)
 
-    ride.status = new_status
+        if not ride:
+            raise HTTPException(
+                status_code=404,
+                detail="Ride not found",
+            )
 
-    self.repository.db.commit()
-    self.repository.db.refresh(ride)
+        if ride.driver_id != driver_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not assigned to this ride",
+            )
 
-    return ride
-    
+        allowed_transitions = {
+            RideStatus.ACCEPTED: [
+                RideStatus.ARRIVING,
+                RideStatus.CANCELLED,
+            ],
+            RideStatus.ARRIVING: [
+                RideStatus.ARRIVED,
+                RideStatus.CANCELLED,
+            ],
+            RideStatus.ARRIVED: [
+                RideStatus.STARTED,
+            ],
+            RideStatus.STARTED: [
+                RideStatus.COMPLETED,
+            ],
+        }
+
+        if new_status not in allowed_transitions.get(
+            ride.status, []
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot change ride from "
+                    f"{ride.status} to {new_status}",
+            )
+
+        ride.status = new_status
+
+        self.repository.db.commit()
+        self.repository.db.refresh(ride)
+
+        return ride
+        
     # api to get the status of a ride 
     def get_ride(self, ride_id: int):
         ride = self.repository.get_by_id(ride_id)
