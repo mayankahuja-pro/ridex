@@ -148,3 +148,22 @@ def update_status(
             )
 
         return ride
+        
+    # api to get the status of a ride by customer
+    def get_customer_ride(
+        self,
+        ride_id: int,
+        customer_id: int,
+    ):
+        ride = self.repository.get_by_id_and_customer(
+            ride_id,
+            customer_id,
+        )
+
+        if not ride:
+            raise HTTPException(
+                status_code=404,
+                detail="Ride not found",
+            )
+
+        return ride

@@ -39,3 +39,20 @@ class RideRepository:
         self.db.refresh(ride)
 
         return ride
+
+        
+    def get_by_id_and_customer(
+        self,
+        ride_id: int,
+        customer_id: int,
+    ):
+
+        statement = (
+            select(Ride)
+            .where(
+                Ride.id == ride_id,
+                Ride.customer_id == customer_id,
+            )
+        )
+
+        return self.db.scalar(statement)
