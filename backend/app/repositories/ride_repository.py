@@ -1,7 +1,9 @@
+from app.core.constants import RideStatus
 from sqlalchemy import select
-from sqlalchemy.orm import Session
-
+from app.core.constants import RideStatus
 from app.models.ride import Ride
+
+ 
 
 
 class RideRepository:
@@ -9,15 +11,18 @@ class RideRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    # api to create a new ride
     def create(self, ride: Ride):
         self.db.add(ride)
         self.db.commit()
         self.db.refresh(ride)
         return ride
-
+    
+    # api to get the ride by ID
     def get_by_id(self, ride_id: int):
         return self.db.get(Ride, ride_id)
-
+    
+    # api to get the ride for update
     def get_for_update(self, ride_id: int):
         statement = (
             select(Ride)
@@ -27,6 +32,7 @@ class RideRepository:
 
         return self.db.scalar(statement)
 
+    # api to assign a driver to a ride  
     def assign_driver(
         self,
         ride: Ride,
@@ -40,7 +46,7 @@ class RideRepository:
 
         return ride
 
-        
+    # api to get the ride by ID and customer
     def get_by_id_and_customer(
         self,
         ride_id: int,
@@ -52,6 +58,23 @@ class RideRepository:
             .where(
                 Ride.id == ride_id,
                 Ride.customer_id == customer_id,
+            )
+        )
+
+        return self.db.scalar(statement)
+    
+    # api to get the active ride by driver
+    def get_active_ride_by_driver(self, driver_id: int):
+        statement = (
+            select(Ride)
+            .where(
+                Ride.driver_id == driver_id,
+                Ride.status.in_([
+                    RideStatus.ACCEPTED,
+                    RideStatus.ARRIVING,
+                    RideStatus.ARRIVED,
+                    RideStatus.STARTED,
+                ]),
             )
         )
 
