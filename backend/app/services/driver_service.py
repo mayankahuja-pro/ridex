@@ -1,3 +1,4 @@
+from app.services.location_service import LocationService
 from fastapi import HTTPException, status
 
 from app.models.driver import Driver
@@ -52,7 +53,7 @@ class DriverService:
 
         if not driver:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Driver profile not found",
             )
 
@@ -60,5 +61,10 @@ class DriverService:
 
         self.repository.db.commit()
         self.repository.db.refresh(driver)
+
+        if is_online:
+            LocationService.set_driver_online(driver.id)
+        else:
+            LocationService.set_driver_offline(driver.id)
 
         return driver

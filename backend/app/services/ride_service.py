@@ -30,6 +30,7 @@ class RideService:
             latitude=data.pickup_lat,
             longitude=data.pickup_lng,
             radius_km=5,
+            limit=5
         )
 
         if not nearby_drivers:
