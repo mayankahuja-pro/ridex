@@ -149,3 +149,4 @@ desktop.ini
 *.swo
 *~
 firebase-service-account.json
+google-services.json
