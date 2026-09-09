@@ -22,7 +22,7 @@ router = APIRouter(
     response_model=RideResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_ride(
+async def create_ride(
     data: RideCreate,
     current_user: User = Depends(
         require_role("customer")

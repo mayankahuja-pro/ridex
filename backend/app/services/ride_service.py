@@ -13,7 +13,7 @@ class RideService:
     def __init__(self, db):
         self.repository = RideRepository(db)
 
-    def create_ride(
+    async def create_ride(
         self,
         customer_id: int,
         data: RideCreate,
