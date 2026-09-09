@@ -40,6 +40,11 @@ class User(Base):
         default="customer",
         nullable=False,
     )
+    
+    fcm_token: Mapped[str | None] = mapped_column(
+    String(500),
+    nullable=True,
+)
 
     driver = relationship(
         "Driver",
