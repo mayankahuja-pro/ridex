@@ -51,12 +51,14 @@ class RideService:
         return self.repository.create(ride)
 
     def accept_ride(
-    self,
-    ride_id: int,
-    driver_id: int,
-):
+        self,
+        ride_id: int,
+        driver_id: int,
+    ):
 
-        ride = self.repository.get_by_id(ride_id)
+        ride = self.repository.get_for_update(
+            ride_id
+        )
 
         if not ride:
             raise HTTPException(
@@ -64,16 +66,19 @@ class RideService:
                 detail="Ride not found",
             )
 
-        if ride.status != "searching":
+        if ride.status != RideStatus.SEARCHING:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Ride is no longer available",
             )
 
-        return self.repository.assign_driver(
-            ride=ride,
-            driver_id=driver_id,
-        )
+        ride.driver_id = driver_id
+        ride.status = RideStatus.ACCEPTED
+
+        self.repository.db.commit()
+        self.repository.db.refresh(ride)
+
+        return ride
 
     async def update_status(
     self,

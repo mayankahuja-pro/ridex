@@ -18,6 +18,15 @@ class RideRepository:
     def get_by_id(self, ride_id: int):
         return self.db.get(Ride, ride_id)
 
+    def get_for_update(self, ride_id: int):
+        statement = (
+            select(Ride)
+            .where(Ride.id == ride_id)
+            .with_for_update()
+        )
+
+        return self.db.scalar(statement)
+
     def assign_driver(
         self,
         ride: Ride,
