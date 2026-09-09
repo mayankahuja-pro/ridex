@@ -1,7 +1,7 @@
 import json
 
 from app.core.redis import redis_client
-
+from app.websocket.manager import manager
 
 class RideMatchingService:
 
@@ -46,3 +46,31 @@ class RideMatchingService:
         key = f"ride:{ride_id}:driver:{driver_id}"
 
         redis_client.delete(key)
+
+    @staticmethod
+    async def send_ride_request(
+        ride,
+        driver_id: int,
+    ):
+        RideMatchingService.create_driver_request(
+            ride_id=ride.id,
+            driver_id=driver_id,
+        )
+
+        await manager.send_to_user(
+            driver_id,
+            {
+                "type": "ride_request",
+                "ride_id": ride.id,
+                "pickup": {
+                    "lat": ride.pickup_lat,
+                    "lng": ride.pickup_lng,
+                },
+                "destination": {
+                    "lat": ride.destination_lat,
+                    "lng": ride.destination_lng,
+                },
+                "fare": ride.fare,
+                "expires_in": 10,
+            },
+        )
