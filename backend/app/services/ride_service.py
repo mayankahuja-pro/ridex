@@ -167,3 +167,37 @@ def update_status(
             )
 
         return ride
+        
+    # api to cancel a ride by customer
+    def cancel_ride(
+    self,
+    ride_id: int,
+    customer_id: int,
+):
+        ride = self.repository.get_by_id_and_customer(
+            ride_id,
+            customer_id,
+        )
+
+        if not ride:
+            raise HTTPException(
+                status_code=404,
+                detail="Ride not found",
+            )
+
+        if ride.status not in [
+            RideStatus.SEARCHING,
+            RideStatus.ACCEPTED,
+            RideStatus.ARRIVING,
+        ]:
+            raise HTTPException(
+                status_code=400,
+                detail="Ride cannot be cancelled",
+            )
+
+        ride.status = RideStatus.CANCELLED
+
+        self.repository.db.commit()
+        self.repository.db.refresh(ride)
+
+        return ride

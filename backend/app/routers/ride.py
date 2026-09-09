@@ -11,14 +11,13 @@ from app.services.driver_service import DriverService
 from app.services.ride_matching_service import RideMatchingService
 from app.websocket.manager import manager 
 from app.core.constants import RideStatus
- 
 
 router = APIRouter(
     prefix="/rides",
     tags=["Rides"],
 )
 
-
+# api to create a ride 
 @router.post(
     "",
     response_model=RideResponse,
@@ -44,6 +43,7 @@ async def create_ride(
 
     return ride
 
+# api to accept a ride 
 @router.post(
     "/{ride_id}/accept",
     response_model=RideResponse,
@@ -121,6 +121,28 @@ async def update_ride_status(
             "ride_id": ride.id,
             "status": ride.status,
         },
+    )
+
+    return ride
+
+
+# api to cancel a ride 
+@router.post(
+    "/{ride_id}/cancel",
+    response_model=RideResponse,
+)
+async def cancel_ride(
+    ride_id: int,
+    current_user: User = Depends(
+        require_role("customer")
+    ),
+    db: Session = Depends(get_db),
+):
+    service = RideService(db)
+
+    ride = service.cancel_ride(
+        ride_id=ride_id,
+        customer_id=current_user.id,
     )
 
     return ride
