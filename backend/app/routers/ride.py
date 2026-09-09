@@ -1,5 +1,5 @@
 from app.models import ride
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status,BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -8,9 +8,11 @@ from app.models.user import User
 from app.schemas.ride import RideCreate, RideResponse
 from app.services.ride_service import RideService
 from app.services.driver_service import DriverService
-from app.websocket.manager import manager
+from app.services.ride_matching_service import RideMatchingService
+from app.websocket.manager import manager 
 from app.core.constants import RideStatus
  
+
 router = APIRouter(
     prefix="/rides",
     tags=["Rides"],
@@ -24,18 +26,23 @@ router = APIRouter(
 )
 async def create_ride(
     data: RideCreate,
-    current_user: User = Depends(
-        require_role("customer")
-    ),
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_role("customer")),
     db: Session = Depends(get_db),
 ):
-
     service = RideService(db)
 
-    return service.create_ride(
+    ride = service.create_ride(
         customer_id=current_user.id,
         data=data,
     )
+
+    background_tasks.add_task(
+        RideMatchingService(db).start_matching,
+        ride.id,
+    )
+
+    return ride
 
 @router.post(
     "/{ride_id}/accept",

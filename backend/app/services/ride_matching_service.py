@@ -1,76 +1,88 @@
-import json
+import asyncio
 
-from app.core.redis import redis_client
+from sqlalchemy.orm import Session
+
+from app.core.constants import RideStatus
+from app.services.location_service import LocationService
 from app.websocket.manager import manager
+
 
 class RideMatchingService:
 
-    REQUEST_TTL = 10
+    REQUEST_TIMEOUT = 10
 
-    @staticmethod
-    def create_driver_request(
-        ride_id: int,
-        driver_id: int,
-    ):
-        key = f"ride:{ride_id}:driver:{driver_id}"
+    def __init__(self, db: Session):
+        self.db = db
 
-        redis_client.setex(
-            key,
-            RideMatchingService.REQUEST_TTL,
-            json.dumps({
-                "ride_id": ride_id,
-                "driver_id": driver_id,
-                "status": "pending",
-            }),
+    async def start_matching(self, ride_id: int):
+
+        from app.models.ride import Ride
+
+        ride = self.db.get(Ride, ride_id)
+
+        if not ride:
+            return
+
+        nearby_drivers = LocationService.get_nearby_drivers(
+            latitude=ride.pickup_lat,
+            longitude=ride.pickup_lng,
+            radius_km=5,
+            limit=5,
         )
 
-    @staticmethod
-    def get_driver_request(
-        ride_id: int,
-        driver_id: int,
-    ):
-        key = f"ride:{ride_id}:driver:{driver_id}"
+        if not nearby_drivers:
+            ride.status = RideStatus.CANCELLED
+            self.db.commit()
+            return
 
-        data = redis_client.get(key)
+        for driver_data in nearby_drivers:
 
-        if not data:
-            return None
+            # Ride already accepted/cancelled?
+            self.db.refresh(ride)
 
-        return json.loads(data)
+            if ride.status != RideStatus.SEARCHING:
+                return
 
-    @staticmethod
-    def delete_driver_request(
-        ride_id: int,
-        driver_id: int,
-    ):
-        key = f"ride:{ride_id}:driver:{driver_id}"
+            driver_id = int(driver_data[0])
 
-        redis_client.delete(key)
+            # Send request to driver
+            await manager.send_to_user(
+                driver_id,
+                {
+                    "type": "ride_request",
+                    "ride_id": ride.id,
+                    "pickup": {
+                        "lat": ride.pickup_lat,
+                        "lng": ride.pickup_lng,
+                    },
+                    "destination": {
+                        "lat": ride.destination_lat,
+                        "lng": ride.destination_lng,
+                    },
+                    "fare": ride.fare,
+                    "expires_in": self.REQUEST_TIMEOUT,
+                },
+            )
 
-    @staticmethod
-    async def send_ride_request(
-        ride,
-        driver_id: int,
-    ):
-        RideMatchingService.create_driver_request(
-            ride_id=ride.id,
-            driver_id=driver_id,
-        )
+            # Wait for driver's response
+            await asyncio.sleep(self.REQUEST_TIMEOUT)
+
+            # Check ride again
+            self.db.refresh(ride)
+
+            if ride.status != RideStatus.SEARCHING:
+                return
+
+        # No driver accepted
+        ride.status = RideStatus.CANCELLED
+        self.db.commit()
 
         await manager.send_to_user(
-            driver_id,
+            ride.customer_id,
             {
-                "type": "ride_request",
+                "type": "ride_status",
                 "ride_id": ride.id,
-                "pickup": {
-                    "lat": ride.pickup_lat,
-                    "lng": ride.pickup_lng,
-                },
-                "destination": {
-                    "lat": ride.destination_lat,
-                    "lng": ride.destination_lng,
-                },
-                "fare": ride.fare,
-                "expires_in": 10,
+                "status": RideStatus.CANCELLED,
+                "message": "No driver accepted the ride",
             },
         )
