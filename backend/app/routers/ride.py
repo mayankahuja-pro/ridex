@@ -100,10 +100,17 @@ async def update_ride_status(
     ),
     db: Session = Depends(get_db),
 ):
+    driver_service = DriverService(db)
+
+    driver = driver_service.get_driver(
+        current_user.id
+    )
+
     service = RideService(db)
 
     ride = await service.update_status(
         ride_id=ride_id,
+        driver_id=driver.id,
         new_status=new_status,
     )
 

@@ -13,6 +13,7 @@ class RideService:
     def __init__(self, db):
         self.repository = RideRepository(db)
 
+    # api to create a new ride
     async def create_ride(
         self,
         customer_id: int,
@@ -50,7 +51,8 @@ class RideService:
         )
 
         return self.repository.create(ride)
-
+    
+    # api to accept a ride
     def accept_ride(
         self,
         ride_id: int,
@@ -80,55 +82,69 @@ class RideService:
         self.repository.db.refresh(ride)
 
         return ride
-
-    async def update_status(
+    
+    # api to update the status of a ride 
+def update_status(
     self,
     ride_id: int,
+    driver_id: int,
     new_status: str,
 ):
+    ride = self.repository.get_by_id(ride_id)
 
+    if not ride:
+        raise HTTPException(
+            status_code=404,
+            detail="Ride not found",
+        )
+
+    if ride.driver_id != driver_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not assigned to this ride",
+        )
+
+    allowed_transitions = {
+        RideStatus.ACCEPTED: [
+            RideStatus.ARRIVING,
+            RideStatus.CANCELLED,
+        ],
+        RideStatus.ARRIVING: [
+            RideStatus.ARRIVED,
+            RideStatus.CANCELLED,
+        ],
+        RideStatus.ARRIVED: [
+            RideStatus.STARTED,
+        ],
+        RideStatus.STARTED: [
+            RideStatus.COMPLETED,
+        ],
+    }
+
+    if new_status not in allowed_transitions.get(
+        ride.status, []
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot change ride from "
+                   f"{ride.status} to {new_status}",
+        )
+
+    ride.status = new_status
+
+    self.repository.db.commit()
+    self.repository.db.refresh(ride)
+
+    return ride
+    
+    # api to get the status of a ride 
+    def get_ride(self, ride_id: int):
         ride = self.repository.get_by_id(ride_id)
 
         if not ride:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Ride not found",
             )
-
-        allowed_transitions = {
-            RideStatus.SEARCHING: [
-                RideStatus.ACCEPTED,
-                RideStatus.CANCELLED,
-            ],
-            RideStatus.ACCEPTED: [
-                RideStatus.ARRIVING,
-                RideStatus.CANCELLED,
-            ],
-            RideStatus.ARRIVING: [
-                RideStatus.ARRIVED,
-                RideStatus.CANCELLED,
-            ],
-            RideStatus.ARRIVED: [
-                RideStatus.STARTED,
-            ],
-            RideStatus.STARTED: [
-                RideStatus.COMPLETED,
-            ],
-        }
-
-        if new_status not in allowed_transitions.get(
-            ride.status,
-            [],
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Cannot change ride from "
-                    f"{ride.status} to {new_status}",
-            )
-
-        ride.status = new_status
-
-        self.repository.db.commit()
-        self.repository.db.refresh(ride)
 
         return ride
