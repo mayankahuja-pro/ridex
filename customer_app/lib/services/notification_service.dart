@@ -9,26 +9,32 @@ class NotificationService {
 
     final token = await _messaging.getToken();
 
-    print("FCM TOKEN: $token");
+    if (token != null) {
+      print("FCM TOKEN: $token");
+
+      await sendTokenToBackend(token);
+    }
 
     FirebaseMessaging.instance.onTokenRefresh.listen(
-      (newToken) {
-        print("NEW FCM TOKEN: $newToken");
+      (newToken) async {
+        print("FCM TOKEN REFRESHED: $newToken");
+
+        await sendTokenToBackend(newToken);
       },
     );
   }
 
   Future<void> _requestPermission() async {
-    final settings =
-        await _messaging.requestPermission(
+    await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
+  }
 
-    print(
-      "Notification permission: "
-      "${settings.authorizationStatus}",
-    );
+  Future<void> sendTokenToBackend(
+    String token,
+  ) async {
+    // API call yahan karenge
   }
 }
