@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.core import firebase
 from app.routers.driver import router as driver_router
 from app.routers.auth import router as auth_router
 from app.routers.ride import router as ride_router
@@ -23,6 +24,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+Base.metadata.create_all(bind=engine)
 app.include_router(auth_router)
 app.include_router(ride_router)
 app.include_router(driver_router)
