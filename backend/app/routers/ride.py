@@ -9,9 +9,10 @@ from app.schemas.ride import RideCreate, RideResponse
 from app.services.ride_service import RideService
 from app.services.driver_service import DriverService
 from app.services.ride_matching_service import RideMatchingService
+from app.services.notification_service import NotificationService
 from app.websocket.manager import manager 
 from app.core.constants import RideStatus
-
+from app.models.user import User
 router = APIRouter(
     prefix="/rides",
     tags=["Rides"],
@@ -31,7 +32,7 @@ async def create_ride(
 ):
     service = RideService(db)
 
-    ride = service.create_ride(
+    ride = await service.create_ride(
         customer_id=current_user.id,
         data=data,
     )
@@ -40,7 +41,6 @@ async def create_ride(
         RideMatchingService(db).start_matching,
         ride.id,
     )
-
     return ride
 
 # api to accept a ride 
@@ -50,28 +50,33 @@ async def create_ride(
 )
 async def accept_ride(
     ride_id: int,
-    current_user: User = Depends(
-        require_role("driver")
-    ),
+    current_user: User = Depends(require_role("driver")),
     db: Session = Depends(get_db),
 ):
-
+    service = RideService(db)
+  
     driver_service = DriverService(db)
 
-    driver = driver_service.get_driver(
-        current_user.id
-    )
+    driver = driver_service.get_driver(current_user.id)
+    
 
-    service = RideService(db)
-
-    return service.accept_ride(
+    ride = service.accept_ride(
         ride_id=ride_id,
         driver_id=driver.id,
     )
-    ride = service.accept_ride(
-    ride_id=ride_id,
-    driver_id=driver.id,
-)
+
+    customer = db.get(User, ride.customer_id)
+
+    if customer:
+        NotificationService.send_to_user(
+            user=customer,
+            title="Ride Accepted",
+            body="Your driver has accepted the ride.",
+            data={
+                "type": "ride_accepted",
+                "ride_id": ride_id,
+            },
+        )
 
     await manager.send_to_user(
         ride.customer_id,
@@ -84,6 +89,7 @@ async def accept_ride(
     )
 
     return ride
+
         
 
 # api to update the status of a ride 
@@ -100,6 +106,8 @@ async def update_ride_status(
     ),
     db: Session = Depends(get_db),
 ):
+
+     
     driver_service = DriverService(db)
 
     driver = driver_service.get_driver(
@@ -113,6 +121,34 @@ async def update_ride_status(
         driver_id=driver.id,
         new_status=new_status,
     )
+
+    if new_status == RideStatus.ARRIVING:
+        customer = db.get(User, ride.customer_id)
+
+        if customer:
+            NotificationService.send_to_user(
+                user=customer,
+                title="Driver Arriving",
+                body="Your driver is on the way.",
+                data={
+                    "type": "driver_arriving",
+                    "ride_id": ride.id,
+                },
+            )
+
+    if new_status == RideStatus.COMPLETED:
+        customer = db.get(User, ride.customer_id)
+
+        if customer:
+            NotificationService.send_to_user(
+                user=customer,
+                title="Ride Completed",
+                body="Your ride has been completed.",
+                data={
+                    "type": "ride_completed",
+                    "ride_id": ride.id,
+                },
+            )
 
     await manager.send_to_user(
         ride.customer_id,
