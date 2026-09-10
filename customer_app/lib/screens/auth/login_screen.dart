@@ -4,7 +4,9 @@ import '../../core/constants/api_constants.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
+import 'dart:convert';
 
+import '../../models/token_response.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -38,15 +40,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
 
-        final data = response.body;
+        final data = jsonDecode(response.body);
 
-        // Temporary parsing will be improved with models.
-        final token =
-            data.substring(
-              data.indexOf("access_token") + 15,
-            );
+        final tokenResponse =
+            TokenResponse.fromJson(data);
 
-        await authService.saveToken(token);
+        await authService.saveToken(
+          tokenResponse.accessToken,
+        );
+              
 
         if (!mounted) return;
 
