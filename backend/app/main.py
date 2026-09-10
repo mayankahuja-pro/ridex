@@ -6,7 +6,7 @@ from app.routers.websocket import router as websocket_router
 
 from app.routers.payment import router as payment_router
 from app.routers.rating import router as rating_router
-
+from app.routers.notifications import router as notification_router
 from app.core.database import Base, engine
 from app.models import (
     User,
@@ -29,6 +29,7 @@ app.include_router(driver_router)
 app.include_router(websocket_router)
 app.include_router(payment_router)
 app.include_router(rating_router)
+app.include_router(notification_router)
 Base.metadata.create_all(bind=engine)
 
  

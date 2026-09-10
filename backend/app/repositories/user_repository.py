@@ -1,3 +1,4 @@
+from backend.app.models import user
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,17 @@ class UserRepository:
 
     def create(self, user: User):
         self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+
+        return user
+
+    def update_fcm_token(
+    self,
+    user: User,
+    token: str,):
+        user.fcm_token = token
+
         self.db.commit()
         self.db.refresh(user)
 
