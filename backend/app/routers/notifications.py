@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -31,4 +31,25 @@ def save_fcm_token(
 
     return {
         "message": "FCM token saved successfully"
+    }
+
+@router.post("/test")
+def test_notification(
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.fcm_token:
+        raise HTTPException(
+            status_code=400,
+            detail="FCM token not found",
+        )
+
+    response = NotificationService.send_notification(
+        token=current_user.fcm_token,
+        title="RideX Test",
+        body="FCM notification is working!",
+    )
+
+    return {
+        "message": "Notification sent",
+        "firebase_response": response,
     }
