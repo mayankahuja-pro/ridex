@@ -40,26 +40,23 @@ class _MapScreenState extends State<MapScreen> {
     print("Destination Longitude: ${position.longitude}");
   }
 
-  void continueBooking() {
-    if (destinationLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Tap on the map to select destination"),
+ void continueBooking() {
+  if (destinationLocation == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Tap on the map to select destination",
         ),
-      );
-      return;
-    }
-
-    print("========== RIDE ==========");
-    print("Pickup: ${pickupLocation.latitude}, ${pickupLocation.longitude}");
-    print("Destination: ${destinationLocation!.latitude}, ${destinationLocation!.longitude}");
-
-    // Navigate or pass result back
-    Navigator.pop(context, {
-      "pickup": pickupLocation,
-      "destination": destinationLocation,
-    });
+      ),
+    );
+    return;
   }
+
+  Navigator.pop(
+    context,
+    destinationLocation,
+  );
+}
 
   @override
   Widget build(BuildContext context) {

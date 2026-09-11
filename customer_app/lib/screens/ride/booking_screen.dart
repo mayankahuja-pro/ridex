@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import 'map_screen.dart';
+
 class BookingScreen extends StatefulWidget {
   final Position currentPosition;
 
@@ -10,37 +13,54 @@ class BookingScreen extends StatefulWidget {
   });
 
   @override
-  State<BookingScreen> createState() => _BookingScreenState();
+  State<BookingScreen> createState() =>
+      _BookingScreenState();
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  final destinationController = TextEditingController();
 
-  bool isBooking = false;
+  LatLng? destinationLocation;
 
-  @override
-  void dispose() {
-    destinationController.dispose();
-    super.dispose();
+  bool isLoading = false;
+
+  Future<void> chooseDestination() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapScreen(
+          currentPosition: widget.currentPosition,
+        ),
+      ),
+    );
+
+    if (result is LatLng) {
+      setState(() {
+        destinationLocation = result;
+      });
+    }
   }
 
-  void bookRide() {
-    if (destinationController.text.trim().isEmpty) {
+  void continueBooking() {
+    if (destinationLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Enter destination"),
+          content: Text("Please select destination"),
         ),
       );
       return;
     }
 
-    // API integration next step.
-    print("Pickup:");
-    print(widget.currentPosition.latitude);
-    print(widget.currentPosition.longitude);
+    print(
+      "Pickup: "
+      "${widget.currentPosition.latitude}, "
+      "${widget.currentPosition.longitude}",
+    );
 
-    print("Destination:");
-    print(destinationController.text);
+    print(
+      "Destination: "
+      "${destinationLocation!.latitude}, "
+      "${destinationLocation!.longitude}",
+    );
   }
 
   @override
@@ -53,68 +73,49 @@ class _BookingScreenState extends State<BookingScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(),
+
+            // Pickup
+            ListTile(
+              leading: const Icon(
+                Icons.my_location,
               ),
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Pickup Location",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "${widget.currentPosition.latitude}, "
-                    "${widget.currentPosition.longitude}",
-                  ),
-                ],
+              title: const Text("Pickup"),
+              subtitle: Text(
+                "${widget.currentPosition.latitude}, "
+                "${widget.currentPosition.longitude}",
               ),
             ),
 
-            const SizedBox(height: 20),
+            const Divider(),
 
-            TextField(
-              controller: destinationController,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.location_on),
-                labelText: "Where do you want to go?",
-                border: OutlineInputBorder(),
+            // Destination
+            ListTile(
+              onTap: chooseDestination,
+              leading: const Icon(
+                Icons.location_on,
+              ),
+              title: const Text("Destination"),
+              subtitle: Text(
+                destinationLocation == null
+                    ? "Choose destination on map"
+                    : "${destinationLocation!.latitude}, "
+                      "${destinationLocation!.longitude}",
+              ),
+              trailing: const Icon(
+                Icons.arrow_forward_ios,
               ),
             ),
 
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MapScreen(
-                    currentPosition:
-                        widget.currentPosition,
-                  ),
-                ),
-              );
-            },
-            child: const Text("Choose on Map"),
-          ),
             const Spacer(),
-
 
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: isBooking ? null : bookRide,
-                child: isBooking
-                    ? const CircularProgressIndicator()
-                    : const Text("Continue"),
+                onPressed: continueBooking,
+                child: const Text(
+                  "Continue",
+                ),
               ),
             ),
           ],
