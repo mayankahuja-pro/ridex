@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-
+import 'map_screen.dart';
 class BookingScreen extends StatefulWidget {
   final Position currentPosition;
 
@@ -90,7 +90,22 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
             ),
 
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MapScreen(
+                    currentPosition:
+                        widget.currentPosition,
+                  ),
+                ),
+              );
+            },
+            child: const Text("Choose on Map"),
+          ),
             const Spacer(),
+
 
             SizedBox(
               width: double.infinity,
