@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
 class MapScreen extends StatefulWidget {
@@ -15,10 +16,9 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapController? mapController;
+  final MapController _mapController = MapController();
 
   late LatLng pickupLocation;
-
   LatLng? destinationLocation;
 
   @override
@@ -51,54 +51,136 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     print("========== RIDE ==========");
-    print("Pickup: ${pickupLocation.latitude}, "
-        "${pickupLocation.longitude}");
+    print("Pickup: ${pickupLocation.latitude}, ${pickupLocation.longitude}");
+    print("Destination: ${destinationLocation!.latitude}, ${destinationLocation!.longitude}");
 
-    print("Destination: ${destinationLocation!.latitude}, "
-        "${destinationLocation!.longitude}");
+    // Navigate or pass result back
+    Navigator.pop(context, {
+      "pickup": pickupLocation,
+      "destination": destinationLocation,
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Select Destination"),
+      ),
       body: Stack(
         children: [
-
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: pickupLocation,
-              zoom: 16,
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: pickupLocation,
+              initialZoom: 16.0,
+              onTap: (tapPosition, point) {
+                selectDestination(point);
+              },
             ),
-
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-
-            onMapCreated: (controller) {
-              mapController = controller;
-            },
-
-            onTap: selectDestination,
-
-            markers: {
-              Marker(
-                markerId: const MarkerId("pickup"),
-                position: pickupLocation,
-                infoWindow: const InfoWindow(
-                  title: "Pickup",
-                ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.customer_app',
               ),
-
-              if (destinationLocation != null)
-                Marker(
-                  markerId: const MarkerId("destination"),
-                  position: destinationLocation!,
-                  infoWindow: const InfoWindow(
-                    title: "Destination",
+              MarkerLayer(
+                markers: [
+                  // Pickup Marker (Green)
+                  Marker(
+                    point: pickupLocation,
+                    width: 70,
+                    height: 70,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: const [
+                              BoxShadow(blurRadius: 4, color: Colors.black26),
+                            ],
+                          ),
+                          child: const Text(
+                            "Pickup",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.location_pin,
+                          color: Colors.green,
+                          size: 38,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-            },
+
+                  // Destination Marker (Red)
+                  if (destinationLocation != null)
+                    Marker(
+                      point: destinationLocation!,
+                      width: 80,
+                      height: 70,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: const [
+                                BoxShadow(blurRadius: 4, color: Colors.black26),
+                              ],
+                            ),
+                            child: const Text(
+                              "Destination",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.location_pin,
+                            color: Colors.red,
+                            size: 38,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
 
+          // Re-center on user position button
+          Positioned(
+            right: 16,
+            bottom: 140,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: Colors.white,
+              onPressed: () {
+                _mapController.move(pickupLocation, 16.0);
+              },
+              child: const Icon(Icons.my_location, color: Colors.black87),
+            ),
+          ),
+
+          // Bottom card for Continue Booking
           Positioned(
             left: 20,
             right: 20,
@@ -112,31 +194,29 @@ class _MapScreenState extends State<MapScreen> {
                   BoxShadow(
                     blurRadius: 10,
                     spreadRadius: 2,
+                    color: Colors.black12,
                   ),
                 ],
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-
                   Text(
                     destinationLocation == null
                         ? "Tap on the map to select destination"
-                        : "Destination selected",
+                        : "Destination selected: ${destinationLocation!.latitude.toStringAsFixed(4)}, ${destinationLocation!.longitude.toStringAsFixed(4)}",
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-
                   const SizedBox(height: 12),
-
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
                       onPressed: continueBooking,
-                      child: const Text(
-                        "Continue",
-                      ),
+                      child: const Text("Continue"),
                     ),
                   ),
                 ],
