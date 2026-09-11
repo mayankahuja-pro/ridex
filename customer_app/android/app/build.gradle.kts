@@ -1,19 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file("local.properties")
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
 
 if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader("UTF-8") { reader ->
-        localProperties.load(reader)
-    }
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 
-def mapsApiKey = localProperties.getProperty("MAPS_API_KEY", "")
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY") ?: ""
 
 android {
     namespace = "com.example.customer_app"
@@ -26,9 +27,7 @@ android {
     }
 
     defaultConfig {
-        manifestPlaceholders = [
-    MAPS_API_KEY: mapsApiKey
-]
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.customer_app"
