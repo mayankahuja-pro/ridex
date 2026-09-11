@@ -1,6 +1,6 @@
 import 'package:customer_app/screens/auth/register_screen.dart';
 import 'package:flutter/material.dart';
-
+import '../../services/notification_service.dart';
 import '../../core/constants/api_constants.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
@@ -39,27 +39,27 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
 
-      if (response.statusCode == 200) {
+if (response.statusCode == 200) {
+  final data = jsonDecode(response.body);
 
-        final data = jsonDecode(response.body);
+  final tokenResponse =
+      TokenResponse.fromJson(data);
 
-        final tokenResponse =
-            TokenResponse.fromJson(data);
+  await authService.saveToken(
+    tokenResponse.accessToken,
+  );
 
-        await authService.saveToken(
-          tokenResponse.accessToken,
-        );
-              
+  await NotificationService().initialize();
 
-        if (!mounted) return;
+  if (!mounted) return;
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const HomeScreen(),
-          ),
-        );
-      } else {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const HomeScreen(),
+    ),
+  );
+} else {
         showError("Invalid phone or password");
       }
     } catch (e) {
