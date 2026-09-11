@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'services/notification_service.dart';
 
 import 'core/theme/app_theme.dart';
-import 'screens/auth/login_screen.dart';
+// import 'screens/auth/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

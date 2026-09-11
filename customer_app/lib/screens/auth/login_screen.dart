@@ -1,3 +1,4 @@
+import 'package:customer_app/screens/auth/register_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -130,6 +131,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: isLoading
                       ? const CircularProgressIndicator()
                       : const Text("Login"),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const RegisterScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Create a new account",
                 ),
               ),
             ],
