@@ -5,6 +5,7 @@ RideX is a full-stack ride-hailing platform inspired by modern services such as 
 The project focuses on real-world backend engineering concepts including JWT authentication, PostgreSQL, Redis GEO-based driver discovery, real-time WebSockets, Firebase Cloud Messaging, ride state management, concurrency control, payments, ratings, and live driver tracking.
 
 ---
+<img width="819" height="805" alt="image" src="https://github.com/user-attachments/assets/22da3aae-d668-427c-804c-8aa35f706f79" />
 
 ## Overview
 
