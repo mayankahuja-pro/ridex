@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
 class MapScreen extends StatefulWidget {
@@ -16,125 +15,135 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  final MapController _mapController = MapController();
-  late LatLng currentLocation;
+  GoogleMapController? mapController;
+
+  late LatLng pickupLocation;
+
+  LatLng? destinationLocation;
 
   @override
   void initState() {
     super.initState();
-    currentLocation = LatLng(
+
+    pickupLocation = LatLng(
       widget.currentPosition.latitude,
       widget.currentPosition.longitude,
     );
   }
 
+  void selectDestination(LatLng position) {
+    setState(() {
+      destinationLocation = position;
+    });
+
+    print("Destination Latitude: ${position.latitude}");
+    print("Destination Longitude: ${position.longitude}");
+  }
+
+  void continueBooking() {
+    if (destinationLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tap on the map to select destination"),
+        ),
+      );
+      return;
+    }
+
+    print("========== RIDE ==========");
+    print("Pickup: ${pickupLocation.latitude}, "
+        "${pickupLocation.longitude}");
+
+    print("Destination: ${destinationLocation!.latitude}, "
+        "${destinationLocation!.longitude}");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Choose Pickup Location"),
-      ),
       body: Stack(
         children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: currentLocation,
-              initialZoom: 16.0,
-              onTap: (tapPosition, point) {
-                setState(() {
-                  currentLocation = point;
-                });
-              },
+
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: pickupLocation,
+              zoom: 16,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.customer_app',
+
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+
+            onMapCreated: (controller) {
+              mapController = controller;
+            },
+
+            onTap: selectDestination,
+
+            markers: {
+              Marker(
+                markerId: const MarkerId("pickup"),
+                position: pickupLocation,
+                infoWindow: const InfoWindow(
+                  title: "Pickup",
+                ),
               ),
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: currentLocation,
-                    width: 50,
+
+              if (destinationLocation != null)
+                Marker(
+                  markerId: const MarkerId("destination"),
+                  position: destinationLocation!,
+                  infoWindow: const InfoWindow(
+                    title: "Destination",
+                  ),
+                ),
+            },
+          ),
+
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 25,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+
+                  Text(
+                    destinationLocation == null
+                        ? "Tap on the map to select destination"
+                        : "Destination selected",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
                     height: 50,
-                    child: const Icon(
-                      Icons.location_pin,
-                      size: 48,
-                      color: Colors.red,
+                    child: ElevatedButton(
+                      onPressed: continueBooking,
+                      child: const Text(
+                        "Continue",
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-
-          
-          // Bottom Info Card
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: Card(
-              elevation: 6,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.my_location, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            "Lat: ${currentLocation.latitude.toStringAsFixed(5)}, "
-                            "Lng: ${currentLocation.longitude.toStringAsFixed(5)}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context, currentLocation);
-                        },
-                        child: const Text("Confirm Location"),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
-          
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        onPressed: () {
-          _mapController.move(
-            LatLng(
-              widget.currentPosition.latitude,
-              widget.currentPosition.longitude,
-            ),
-            16.0,
-          );
-          setState(() {
-            currentLocation = LatLng(
-              widget.currentPosition.latitude,
-              widget.currentPosition.longitude,
-            );
-          });
-        },
-        child: const Icon(Icons.my_location),
       ),
     );
   }
