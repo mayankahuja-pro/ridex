@@ -1,3 +1,4 @@
+import 'package:customer_app/models/fare_estimate.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -153,6 +154,132 @@ void showMessage(String message) {
     );
   }
 
+
+  Future<void> getFareEstimate() async {
+  if (destinationLocation == null) {
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    final token = await authService.getToken();
+
+    final response = await apiService.post(
+      ApiConstants.fareEstimate,
+      {
+        "pickup_lat":
+            widget.currentPosition.latitude,
+        "pickup_lng":
+            widget.currentPosition.longitude,
+        "destination_lat":
+            destinationLocation!.latitude,
+        "destination_lng":
+            destinationLocation!.longitude,
+      },
+      token: token,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      final estimate =
+          FareEstimate.fromJson(data);
+
+      if (!mounted) return;
+
+      showFarePreview(estimate);
+    } else {
+      final data = jsonDecode(response.body);
+
+      showMessage(
+        data["detail"] ?? "Unable to calculate fare",
+      );
+    }
+  } catch (e, stackTrace) {
+  debugPrint("❌ Fare estimate error: $e");
+  debugPrint("❌ Stack trace: $stackTrace");
+
+  showMessage("Error: $e");
+}
+   finally {
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+}
+
+void showFarePreview(
+  FareEstimate estimate,
+) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Ride Estimate",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Row(
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Bike"),
+                Text(
+                  "₹${estimate.fare.toStringAsFixed(2)}",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              "${estimate.distanceKm.toStringAsFixed(2)} km",
+            ),
+
+            const SizedBox(height: 24),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  createRide();
+                },
+                child: const Text(
+                  "Confirm Ride",
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -202,7 +329,7 @@ void showMessage(String message) {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: isLoading ? null : createRide,
+            onPressed: isLoading? null: getFareEstimate,
             child: isLoading
                 ? const CircularProgressIndicator()
                 : const Text("Book Ride"),

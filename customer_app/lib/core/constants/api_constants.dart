@@ -7,6 +7,6 @@ class ApiConstants {
   static const String me = "auth/me";
 
   static const String rides = "rides";
-
+  static const String fareEstimate ="rides/estimate";
   static const String fcmToken = "notifications/token";
 }
