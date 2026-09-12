@@ -1,4 +1,5 @@
 import 'package:customer_app/models/fare_estimate.dart';
+import 'package:customer_app/screens/ride/searching_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -76,19 +77,23 @@ class _BookingScreenState extends State<BookingScreen> {
       token: token,
     );
 
-    if (response.statusCode == 201) {
-      final data = jsonDecode(response.body);
+   if (response.statusCode == 201) {
+  final data = jsonDecode(response.body);
 
-      final ride = Ride.fromJson(data);
+  final ride = Ride.fromJson(data);
 
-      setState(() {
-        createdRide = ride;
-      });
+  if (!mounted) return;
 
-      print("Ride created: ${ride.id}");
-      print("Fare: ₹${ride.fare}");
-      print("Status: ${ride.status}");
-    } else {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => SearchingScreen(
+        ride: ride,
+      ),
+    ),
+  );
+}
+    else {
       final data = jsonDecode(response.body);
 
       showMessage(
