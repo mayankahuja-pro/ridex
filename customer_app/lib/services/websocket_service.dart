@@ -14,7 +14,7 @@ class WebSocketService {
   void connect(int userId) {
     _channel = WebSocketChannel.connect(
       Uri.parse(
-        "ws://10.0.2.2:8000/ws/$userId",
+        "ws://127.0.0.1:8000/ws/$userId",
       ),
     );
   }

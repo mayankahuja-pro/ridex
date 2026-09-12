@@ -50,7 +50,7 @@ class _SearchingScreenState
   ) {
     print("WebSocket message: $message");
 
-    if (message["type"] == "ride_status") {
+    if (message["type"] == "ride_accepted") {
       final status = message["status"];
 
       if (status == "accepted") {

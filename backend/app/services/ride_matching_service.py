@@ -10,13 +10,14 @@ from app.websocket.manager import manager
 
 class RideMatchingService:
 
-    REQUEST_TIMEOUT = 10
+    REQUEST_TIMEOUT = 30
 
     def __init__(self, db: Session):
         self.db = db
 
     async def start_matching(self, ride_id: int):
 
+        from app.models.driver import Driver
         from app.models.ride import Ride
 
         ride = self.db.get(Ride, ride_id)
@@ -44,7 +45,13 @@ class RideMatchingService:
             if ride.status != RideStatus.SEARCHING:
                 return
 
+            # driver_id is the Driver table PK (used for Redis key & accept_ride)
             driver_id = int(driver_data[0])
+
+            # Look up user_id — WebSocket connections are keyed by user_id
+            driver = self.db.get(Driver, driver_id)
+            if not driver:
+                continue
 
             # Store the ride request in Redis so accept_ride can verify it
             redis_client.set(
@@ -53,9 +60,9 @@ class RideMatchingService:
                 ex=self.REQUEST_TIMEOUT,
             )
 
-            # Send request to driver via WebSocket
+            # Send request to driver via WebSocket (keyed by user_id)
             await manager.send_to_user(
-                driver_id,
+                driver.user_id,
                 {
                     "type": "ride_request",
                     "ride_id": ride.id,
