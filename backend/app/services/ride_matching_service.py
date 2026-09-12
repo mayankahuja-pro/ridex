@@ -3,6 +3,7 @@ import asyncio
 from sqlalchemy.orm import Session
 
 from app.core.constants import RideStatus
+from app.core.redis import redis_client
 from app.services.location_service import LocationService
 from app.websocket.manager import manager
 
@@ -45,7 +46,14 @@ class RideMatchingService:
 
             driver_id = int(driver_data[0])
 
-            # Send request to driver
+            # Store the ride request in Redis so accept_ride can verify it
+            redis_client.set(
+                f"ride:{ride_id}:driver:{driver_id}",
+                "pending",
+                ex=self.REQUEST_TIMEOUT,
+            )
+
+            # Send request to driver via WebSocket
             await manager.send_to_user(
                 driver_id,
                 {
@@ -66,6 +74,9 @@ class RideMatchingService:
 
             # Wait for driver's response
             await asyncio.sleep(self.REQUEST_TIMEOUT)
+
+            # Clean up Redis key if driver didn't accept in time
+            redis_client.delete(f"ride:{ride_id}:driver:{driver_id}")
 
             # Check ride again
             self.db.refresh(ride)
