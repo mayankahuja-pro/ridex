@@ -90,11 +90,13 @@ class _RideTrackingScreenState
       return;
     }
 
-    if (message["ride_id"] != widget.ride.id) {
+    if (int.tryParse(message["ride_id"].toString()) !=
+        widget.ride.id) {
       return;
     }
 
-    final status = message["status"];
+    final status = message["status"]?.toString();
+    if (status == null) return;
 
     if (!mounted) return;
 
