@@ -13,4 +13,5 @@ class ApiConstants {
 
   static const String driverLocation =
       "/drivers/location";
+  static const String fcmToken = "notifications/token";
 }
