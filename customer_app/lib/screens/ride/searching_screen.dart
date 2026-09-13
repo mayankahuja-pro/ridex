@@ -54,7 +54,7 @@ class _SearchingScreenState
       final status = message["status"];
 
       if (status == "accepted") {
-        openTrackingScreen();
+        openTrackingScreen(status);
       }
 
       if (status == "cancelled") {
@@ -63,7 +63,7 @@ class _SearchingScreenState
     }
   }
 
-  void openTrackingScreen() {
+  void openTrackingScreen(String status) {
     if (!mounted) return;
 
     Navigator.pushReplacement(
@@ -71,6 +71,7 @@ class _SearchingScreenState
       MaterialPageRoute(
         builder: (_) => RideTrackingScreen(
           ride: widget.ride,
+          initialStatus: status,
         ),
       ),
     );

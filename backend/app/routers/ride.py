@@ -27,6 +27,21 @@ router = APIRouter(
     tags=["Rides"],
 )
 
+
+@router.get(
+    "/{ride_id}",
+    response_model=RideResponse,
+)
+def get_customer_ride(
+    ride_id: int,
+    current_user: User = Depends(require_role("customer")),
+    db: Session = Depends(get_db),
+):
+    return RideService(db).get_customer_ride(
+        ride_id=ride_id,
+        customer_id=current_user.id,
+    )
+
 # api to create a ride 
 @router.post(
     "",

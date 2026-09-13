@@ -1,4 +1,4 @@
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 
 
 class ConnectionManager:
@@ -15,8 +15,9 @@ class ConnectionManager:
 
         self.connections[user_id] = websocket
 
-    def disconnect(self, user_id: int):
-        self.connections.pop(user_id, None)
+    def disconnect(self, user_id: int, websocket: WebSocket):
+        if self.connections.get(user_id) is websocket:
+            self.connections.pop(user_id, None)
 
     async def send_to_user(
         self,
@@ -26,7 +27,10 @@ class ConnectionManager:
         websocket = self.connections.get(user_id)
 
         if websocket:
-            await websocket.send_json(message)
+            try:
+                await websocket.send_json(message)
+            except (WebSocketDisconnect, RuntimeError, OSError):
+                self.disconnect(user_id, websocket)
 
 
 manager = ConnectionManager()
