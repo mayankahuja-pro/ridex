@@ -100,7 +100,7 @@ class RideService:
         return ride
     
     # api to update the status of a ride 
-    def update_status(
+    async def update_status(
         self,
         ride_id: int,
         driver_id: int,

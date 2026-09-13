@@ -22,3 +22,15 @@ class RideResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class FareEstimateRequest(BaseModel):
+    pickup_lat: float
+    pickup_lng: float
+    destination_lat: float
+    destination_lng: float
+
+
+class FareEstimateResponse(BaseModel):
+    distance_km: float
+    fare: float
