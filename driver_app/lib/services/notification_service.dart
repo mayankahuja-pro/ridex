@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 import 'api_service.dart';
 import '../core/constants/api_constants.dart';
@@ -12,6 +13,10 @@ class NotificationService {
   final AuthService _authService = AuthService();
 
   Future<void> initialize() async {
+    if (kIsWeb) {
+      return;
+    }
+
     await _requestPermission();
 
     final token = await _messaging.getToken();

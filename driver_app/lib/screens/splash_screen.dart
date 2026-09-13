@@ -33,7 +33,7 @@ class _SplashScreenState
     if (!mounted) return;
 
     if (token != null && token.isNotEmpty) {
-      await NotificationService().initialize();
+      // await NotificationService().initialize();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

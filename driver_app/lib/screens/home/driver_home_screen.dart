@@ -25,38 +25,50 @@ class _DriverHomeScreenState
   final AuthService authService =
       AuthService();
 
-  Future<void> toggleOnline() async {
-    final token =
-        await authService.getToken();
+Future<void> toggleOnline() async {
+  final token = await authService.getToken();
 
-    if (token == null) return;
+  if (token == null) {
+    // debugPrint("TOKEN IS NULL");
+    return;
+  }
 
-    final newStatus = !isOnline;
+  final newStatus = !isOnline;
 
-    final response =
-        await apiService.post(
-      ApiConstants.driverStatus,
-      {
-        "is_online": newStatus,
-      },
-      token: token,
-    );
+  try {
+    final response = await apiService.patch(
+  "${ApiConstants.driverStatus}?is_online=$newStatus",
+  {},
+  token: token,
+);
+
+    // debugPrint("STATUS CODE: ${response.statusCode}");
+    // debugPrint("RESPONSE: ${response.body}");
 
     if (response.statusCode == 200) {
       setState(() {
         isOnline = newStatus;
       });
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
           content: Text(
-            "Unable to update driver status",
+            "Unable to update status (${response.statusCode})",
           ),
         ),
       );
     }
+  } catch (e) {
+    // debugPrint("STATUS UPDATE ERROR: $e");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Error: $e"),
+      ),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

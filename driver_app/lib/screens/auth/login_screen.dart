@@ -49,7 +49,7 @@ if (response.statusCode == 200) {
     tokenResponse.accessToken,
   );
 
-  await NotificationService().initialize();
+  // await NotificationService().initialize();
 
   if (!mounted) return;
 
@@ -62,9 +62,12 @@ if (response.statusCode == 200) {
 } else {
         showError("Invalid phone or password");
       }
-    } catch (e) {
-      showError("Something went wrong");
-    } finally {
+    } catch (e, stackTrace) {
+  debugPrint("LOGIN ERROR: $e");
+  debugPrint("STACK TRACE: $stackTrace");
+
+  showError("Error: $e");
+} finally {
       if (mounted) {
         setState(() {
           isLoading = false;
