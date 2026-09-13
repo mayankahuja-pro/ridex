@@ -13,10 +13,34 @@ from app.services.notification_service import NotificationService
 from app.websocket.manager import manager 
 from app.core.constants import RideStatus
 from app.models.user import User
+
+from app.services.fare_service import FareService
+
+from app.schemas.ride import FareEstimateRequest, FareEstimateResponse
+
+
+
+
+
 router = APIRouter(
     prefix="/rides",
     tags=["Rides"],
 )
+
+
+@router.get(
+    "/{ride_id}",
+    response_model=RideResponse,
+)
+def get_customer_ride(
+    ride_id: int,
+    current_user: User = Depends(require_role("customer")),
+    db: Session = Depends(get_db),
+):
+    return RideService(db).get_customer_ride(
+        ride_id=ride_id,
+        customer_id=current_user.id,
+    )
 
 # api to create a ride 
 @router.post(
@@ -180,5 +204,32 @@ async def cancel_ride(
         ride_id=ride_id,
         customer_id=current_user.id,
     )
+# api to estimate fare
+@router.post(
+    "/estimate",
+    response_model=FareEstimateResponse,
+)
+def estimate_fare(
+    data: FareEstimateRequest,
+    current_user: User = Depends(
+        require_role("customer")
+    ),
+):
+    distance = FareService.calculate_distance(
+        data.pickup_lat,
+        data.pickup_lng,
+        data.destination_lat,
+        data.destination_lng,
+    )
 
-    return ride
+    fare = FareService.calculate_fare(
+        data.pickup_lat,
+        data.pickup_lng,
+        data.destination_lat,
+        data.destination_lng,
+    )
+
+    return {
+        "distance_km": round(distance, 2),
+        "fare": round(fare, 2),
+    }

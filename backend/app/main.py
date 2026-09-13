@@ -16,13 +16,25 @@ from app.models import (
     Payment,
     Rating,
 )
- 
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI(
     title="RideX API",
     version="1.0.0",
 )
+
+# Add CORS middleware to handle OPTIONS preflight requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],            # Allows all origins (or specify your Flutter web port)
+    allow_credentials=True,
+    allow_methods=["*"],            # Allows OPTIONS, POST, GET, etc.
+    allow_headers=["*"],
+)
+
+
+
 
 Base.metadata.create_all(bind=engine)
 app.include_router(auth_router)

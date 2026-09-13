@@ -1,0 +1,12 @@
+class ApiConstants {
+  static const String baseUrl = "http://127.0.0.1:8000/";
+  // static const String baseUrl = "http://10.0.2.2:8000";
+
+  static const String login = "auth/login";
+  static const String register = "auth/register";
+  static const String me = "auth/me";
+
+  static const String rides = "rides";
+  static const String fareEstimate ="rides/estimate";
+  static const String fcmToken = "notifications/token";
+}
