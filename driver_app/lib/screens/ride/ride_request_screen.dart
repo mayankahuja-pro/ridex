@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../models/ride.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import 'active_ride_screen.dart';
 
 class RideRequestScreen extends StatefulWidget {
   final int rideId;
@@ -109,13 +111,15 @@ class _RideRequestScreenState
 
       if (!mounted) return;
 
-      Navigator.pop(context);
+      final ride = Ride.fromJson(
+        jsonDecode(response.body),
+      );
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Ride accepted",
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ActiveRideScreen(
+            ride: ride,
           ),
         ),
       );
