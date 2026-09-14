@@ -13,12 +13,12 @@ Future<void> main() async {
 
   runApp(const RideXApp());
 
-  if (!kIsWeb) {
-    await Firebase.initializeApp();
+  // if (!kIsWeb) {
+  //   await Firebase.initializeApp();
 
-    final notificationService = NotificationService();
-    await notificationService.initialize();
-  }
+  //   final notificationService = NotificationService();
+  //   await notificationService.initialize();
+  // }
 }
 
 class RideXApp extends StatelessWidget {
