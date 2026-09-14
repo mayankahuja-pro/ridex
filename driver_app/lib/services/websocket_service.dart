@@ -5,6 +5,12 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class WebSocketService {
   WebSocketChannel? _channel;
 
+  Stream<Map<String, dynamic>>? get messages =>
+      _channel?.stream.map(
+        (message) =>
+            jsonDecode(message) as Map<String, dynamic>,
+      );
+
   void connect(int userId) {
     _channel = WebSocketChannel.connect(
       Uri.parse(
@@ -18,11 +24,7 @@ class WebSocketService {
     required double latitude,
     required double longitude,
   }) {
-    if (_channel == null) {
-      return;
-    }
-
-    _channel!.sink.add(
+    _channel?.sink.add(
       jsonEncode({
         "type": "driver_location",
         "driver_id": driverId,

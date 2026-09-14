@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -11,6 +10,7 @@ import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/location_service.dart';
 import '../../services/websocket_service.dart';
+import '../ride/ride_request_screen.dart';
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({
@@ -31,7 +31,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
   StreamSubscription<Position>? locationSubscription;
 
+  StreamSubscription<Map<String, dynamic>>?
+      webSocketSubscription;
+
   int? driverId;
+  int? userId;
 
   @override
   void initState() {
@@ -44,32 +48,135 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     locationSubscription?.cancel();
     locationSubscription = null;
 
+    webSocketSubscription?.cancel();
+    webSocketSubscription = null;
+
     webSocketService.disconnect();
   }
 
   void startLocationTracking() {
-    if (driverId == null) {
-      return;
-    }
+  if (driverId == null) {
+    debugPrint("❌ Cannot start WebSocket: driverId is null");
+    return;
+  }
 
-    webSocketService.connect(driverId!);
+  debugPrint("🟢 Starting WebSocket for driverId: $driverId");
 
-    locationSubscription =
-        locationService.getLocationStream().listen(
-      (Position position) {
+  webSocketService.connect(userId!);
+
+
+  debugPrint("🟢 WebSocket connect() called");
+
+  listenToMessages();
+
+  locationSubscription =
+      locationService.getLocationStream().listen(
+    (Position position) {
+      debugPrint(
+        "📍 Driver Location: "
+        "${position.latitude}, "
+        "${position.longitude}",
+      );
+
+      webSocketService.sendDriverLocation(
+        driverId: driverId!,
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+    },
+    onError: (error) {
+      debugPrint("❌ Location stream error: $error");
+    },
+  );
+}
+
+void listenToMessages() {
+  debugPrint("👂 Starting WebSocket message listener...");
+
+  webSocketSubscription?.cancel();
+
+  final messages = webSocketService.messages;
+
+  if (messages == null) {
+    debugPrint("❌ WebSocket messages stream is NULL");
+    return;
+  }
+
+  debugPrint("✅ WebSocket messages stream exists");
+
+  webSocketSubscription = messages.listen(
+    (message) {
+      debugPrint("📨 INCOMING WEBSOCKET MESSAGE:");
+      debugPrint(message.toString());
+
+      handleMessage(message);
+    },
+    onError: (error) {
+      debugPrint("❌ WebSocket stream error: $error");
+    },
+    onDone: () {
+      debugPrint("⚠️ WebSocket stream CLOSED");
+    },
+  );
+}
+
+void handleMessage(Map<String, dynamic> message) {
+  debugPrint("🔵 handleMessage() called");
+  debugPrint("🔵 Message: $message");
+  debugPrint("🔵 Message type: ${message["type"]}");
+
+  if (message["type"] == "ride_request") {
+    debugPrint("🚕 RIDE REQUEST RECEIVED!");
+
+    openRideRequest(message);
+  } else {
+    debugPrint("⚠️ Unknown WebSocket message type");
+  }
+}
+
+
+  void openRideRequest(
+    Map<String, dynamic> message,
+  ) {
+    if (!mounted) return;
+
+    try {
+      final pickup = message["pickup"];
+      final destination = message["destination"];
+
+      if (pickup is! Map<String, dynamic> ||
+          destination is! Map<String, dynamic>) {
         debugPrint(
-          "Driver Location: "
-          "${position.latitude}, "
-          "${position.longitude}",
+          "Invalid ride request location data: $message",
         );
+        return;
+      }
 
-        webSocketService.sendDriverLocation(
-          driverId: driverId!,
-          latitude: position.latitude,
-          longitude: position.longitude,
-        );
-      },
-    );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RideRequestScreen(
+            rideId: message["ride_id"],
+            pickupLat:
+                (pickup["lat"] as num).toDouble(),
+            pickupLng:
+                (pickup["lng"] as num).toDouble(),
+            destinationLat:
+                (destination["lat"] as num).toDouble(),
+            destinationLng:
+                (destination["lng"] as num).toDouble(),
+            fare:
+                (message["fare"] as num).toDouble(),
+            expiresIn:
+                message["expires_in"] ?? 10,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint(
+        "Failed to open ride request: $e",
+      );
+    }
   }
 
   Future<void> toggleOnline() async {
@@ -106,6 +213,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       );
 
       if (response.statusCode == 200) {
+        if (!mounted) return;
+
         setState(() {
           isOnline = newStatus;
         });
@@ -137,37 +246,56 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     }
   }
 
-  Future<void> loadDriverProfile() async {
-    try {
-      final token = await authService.getToken();
+ Future<void> loadDriverProfile() async {
+  try {
+    final token = await authService.getToken();
 
-      if (token == null) return;
-
-      final response = await apiService.get(
-        ApiConstants.driverProfile,
-        token: token,
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (!mounted) return;
-
-        setState(() {
-          driverId = data["id"];
-          isOnline = data["is_online"] ?? false;
-        });
-
-        // If driver was already online when the screen loaded,
-        // start location tracking.
-        if (isOnline) {
-          startLocationTracking();
-        }
-      }
-    } catch (e) {
-      debugPrint("Failed to load driver profile: $e");
+    if (token == null) {
+      debugPrint("❌ Token is null");
+      return;
     }
+
+    debugPrint("🔵 Loading driver profile...");
+
+    final response = await apiService.get(
+      ApiConstants.driverProfile,
+      token: token,
+    );
+
+    debugPrint("🔵 Profile status: ${response.statusCode}");
+    debugPrint("🔵 Profile response: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      debugPrint("🔵 Decoded profile: $data");
+      debugPrint("🔵 Driver ID from API: ${data["id"]}");
+      debugPrint("🔵 Driver ID type: ${data["id"].runtimeType}");
+
+      if (!mounted) return;
+
+      setState(() {
+        userId = data["user_id"];
+        driverId = data["id"];
+        isOnline = data["is_online"] ?? false;
+      });
+
+      debugPrint("✅ driverId after setState: $driverId");
+      debugPrint("✅ isOnline: $isOnline");
+
+      if (isOnline) {
+        startLocationTracking();
+      }
+    } else {
+      debugPrint(
+        "❌ Failed to load driver profile: ${response.statusCode}",
+      );
+    }
+  } catch (e, stackTrace) {
+    debugPrint("❌ Failed to load driver profile: $e");
+    debugPrint("$stackTrace");
   }
+}
 
   Future<void> logout() async {
     await AuthService().clearToken();
@@ -186,6 +314,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   @override
   void dispose() {
     locationSubscription?.cancel();
+    webSocketSubscription?.cancel();
+
     webSocketService.disconnect();
 
     super.dispose();
@@ -194,7 +324,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    appBar: AppBar(
+      appBar: AppBar(
         title: const Text("RideX Rider"),
         actions: [
           IconButton(
@@ -227,16 +357,13 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             ),
 
             const SizedBox(height: 30),
-
             Switch(
               value: isOnline,
               onChanged: (_) {
                 toggleOnline();
               },
             ),
-
             const SizedBox(height: 10),
-
             Text(
               isOnline
                   ? "Waiting for ride requests..."
@@ -248,4 +375,3 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     );
   }
 }
- 

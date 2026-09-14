@@ -10,7 +10,7 @@ from app.websocket.manager import manager
 
 class RideMatchingService:
 
-    REQUEST_TIMEOUT = 30
+    REQUEST_TIMEOUT = 10
 
     def __init__(self, db: Session):
         self.db = db

@@ -6,12 +6,14 @@ class ApiConstants {
   static const String me = "/auth/me";
 
   static const String driverProfile =
-      "/drivers/profile";
+      "/drivers/me";
 
   static const String driverStatus =
       "/drivers/status";
 
   static const String driverLocation =
       "/drivers/location";
+
+  static const String rides = "/rides";
   static const String fcmToken = "notifications/token";
 }
