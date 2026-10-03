@@ -68,10 +68,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
+
       appBar: AppBar(
-        title: const Text('My Profile'),
+        title: const Text('MY PROFILE'),
         centerTitle: true,
       ),
+
       body: _buildBody(),
     );
   }
@@ -79,29 +82,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(
+          color: Color(0xFFB6FF00),
+        ),
       );
     }
 
     if (_errorMessage != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _getProfile,
-              child: const Text('Retry'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Color(0xFFFFE600),
+                size: 48,
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: _getProfile,
+                child: const Text('RETRY'),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_user == null) {
       return const Center(
-        child: Text('No profile found'),
+        child: Text(
+          'No profile found',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
       );
     }
 
@@ -110,102 +140,194 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final phone = _user!['phone'] ?? '-';
     final image = _user!['profileImage'];
 
-    return RefreshIndicator(
-      onRefresh: _getProfile,
-      child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const SizedBox(height: 20),
+    final hasImage =
+        image != null && image.toString().isNotEmpty;
 
-          // Profile Image
+    return RefreshIndicator(
+      color: const Color(0xFFB6FF00),
+      backgroundColor: const Color(0xFF0D0D0D),
+
+      onRefresh: _getProfile,
+
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          24,
+          20,
+          30,
+        ),
+
+        children: [
+          // =====================================================
+          // PROFILE HEADER
+          // =====================================================
+
           Center(
-            child: CircleAvatar(
-              radius: 55,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage:
-                  image != null && image.toString().isNotEmpty
-                      ? NetworkImage(image)
-                      : null,
-              child: image == null || image.toString().isEmpty
-                  ? const Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.grey,
-                    )
-                  : null,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+
+                border: Border.all(
+                  color: const Color(0xFFB6FF00),
+                  width: 2,
+                ),
+
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x5533FF00),
+                    blurRadius: 18,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+
+              child: CircleAvatar(
+                radius: 55,
+
+                backgroundColor:
+                    const Color(0xFF151515),
+
+                backgroundImage: hasImage
+                    ? NetworkImage(image.toString())
+                    : null,
+
+                child: !hasImage
+                    ? const Icon(
+                        Icons.person,
+                        size: 58,
+                        color: Color(0xFFB6FF00),
+                      )
+                    : null,
+              ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // Name
+          // =====================================================
+          // NAME
+          // =====================================================
+
           Center(
             child: Text(
-              name,
+              name.toString(),
+
+              textAlign: TextAlign.center,
+
               style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          const Center(
+            child: Text(
+              'CUSTOMER PROFILE',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFB6FF00),
+                letterSpacing: 2,
               ),
             ),
           ),
 
           const SizedBox(height: 30),
 
+          // =====================================================
+          // PROFILE DETAILS
+          // =====================================================
+
           _profileItem(
             icon: Icons.email_outlined,
-            title: 'Email',
+            title: 'EMAIL',
             value: email.toString(),
           ),
 
           _profileItem(
             icon: Icons.phone_outlined,
-            title: 'Phone',
+            title: 'PHONE',
             value: phone.toString(),
           ),
 
           _profileItem(
             icon: Icons.person_outline,
-            title: 'User ID',
+            title: 'USER ID',
             value: '${_user!['id'] ?? '-'}',
           ),
 
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
+
+          // =====================================================
+          // EDIT PROFILE
+          // =====================================================
 
           SizedBox(
             height: 50,
+
             child: OutlinedButton.icon(
               onPressed: () {
                 // TODO: Edit profile
               },
-              icon: const Icon(Icons.edit),
-              label: const Text('Edit Profile'),
+
+              icon: const Icon(
+                Icons.edit_outlined,
+              ),
+
+              label: const Text(
+                'EDIT PROFILE',
+              ),
             ),
           ),
 
           const SizedBox(height: 12),
 
-SizedBox(
-  height: 50,
-  child: OutlinedButton.icon(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const RideHistoryScreen(),
-        ),
-      );
-    },
-    icon: const Icon(Icons.history),
-    label: const Text('Ride History'),
-  ),
-),
+          // =====================================================
+          // RIDE HISTORY
+          // =====================================================
 
+          SizedBox(
+            height: 50,
+
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const RideHistoryScreen(),
+                  ),
+                );
+              },
+
+              icon: const Icon(
+                Icons.history,
+              ),
+
+              label: const Text(
+                'RIDE HISTORY',
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
         ],
       ),
     );
-
-    // historyy buttin
   }
+
+  // ============================================================
+  // PROFILE ITEM
+  // ============================================================
 
   Widget _profileItem({
     required IconData icon,
@@ -214,35 +336,82 @@ SizedBox(
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
+
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: const Color(0xFF0D0D0D),
+
         borderRadius: BorderRadius.circular(12),
+
+        border: Border.all(
+          color: const Color(0xFF292929),
+          width: 1,
+        ),
       ),
+
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: Colors.blue,
+          // ------------------------------------------------------
+          // ICON
+          // ------------------------------------------------------
+
+          Container(
+            width: 42,
+            height: 42,
+
+            decoration: BoxDecoration(
+              color: const Color(0xFF151515),
+
+              borderRadius: BorderRadius.circular(10),
+
+              border: Border.all(
+                color: const Color(0xFF334700),
+              ),
+            ),
+
+            child: Icon(
+              icon,
+              color: const Color(0xFFB6FF00),
+              size: 21,
+            ),
           ),
-          const SizedBox(width: 16),
+
+          const SizedBox(width: 14),
+
+          // ------------------------------------------------------
+          // TEXT
+          // ------------------------------------------------------
+
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFB6FF00),
+                    letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+
+                const SizedBox(height: 5),
+
                 Text(
                   value,
+
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: Colors.white,
                   ),
                 ),
               ],
