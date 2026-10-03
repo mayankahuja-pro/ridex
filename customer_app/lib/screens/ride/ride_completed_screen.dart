@@ -4,7 +4,7 @@ import '../../models/ride.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../../core/constants/api_constants.dart';
-
+import 'ratingScreen.dart';
 class RideCompletedScreen extends StatefulWidget {
   final Ride ride;
 

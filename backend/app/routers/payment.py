@@ -36,8 +36,7 @@ def create_payment(
             detail="Ride not found",
         )
 
-    # Temporary/mock amount.
-    # Later we'll fetch it from the ride.
+   
     amount = ride.fare
 
     service = PaymentService(db)

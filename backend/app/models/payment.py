@@ -1,8 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
+ 
 
 from sqlalchemy import ForeignKey, String, DateTime, Integer, Numeric
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column,relationship
 
 from app.core.database import Base
 
@@ -43,3 +44,8 @@ class Payment(Base):
         DateTime,
         default=datetime.utcnow,
     )
+    
+    ride = relationship(
+    "Ride",
+    back_populates="payment",
+)
