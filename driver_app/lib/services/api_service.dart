@@ -72,4 +72,24 @@ Future<http.Response> patch(
       headers: headers,
     );
   }
+
+
+  Future<List<dynamic>> getList(
+  String endpoint, {
+  String? token,
+}) async {
+  final response = await get(
+    endpoint,
+    token: token,
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(
+      "Failed to load data",
+    );
+  }
+
+  return jsonDecode(response.body)
+      as List<dynamic>;
+}
 }
