@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status,BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_role
+from app.core.dependencies import get_current_user, require_role
 from app.models.user import User
 from app.schemas.ride import RideCreate, RideResponse
 from app.services.ride_service import RideService
@@ -13,7 +13,7 @@ from app.services.notification_service import NotificationService
 from app.websocket.manager import manager 
 from app.core.constants import RideStatus
 from app.models.user import User
-
+from app.models.ride import Ride
 from app.services.fare_service import FareService
 
 from app.schemas.ride import FareEstimateRequest, FareEstimateResponse
@@ -26,6 +26,31 @@ router = APIRouter(
     prefix="/rides",
     tags=["Rides"],
 )
+
+
+# history of rides for a customer
+@router.get(
+    "/history",
+    response_model=list[RideResponse],
+)
+def ride_history(
+    current_user: User = Depends(
+         get_current_user
+    ),
+    db: Session = Depends(get_db),
+):
+    rides = (
+        db.query(Ride)
+        .filter(
+            Ride.customer_id == current_user.id
+        )
+        .order_by(
+            Ride.id.desc()
+        )
+        .all()
+    )
+
+    return rides
 
 
 @router.get(
@@ -233,3 +258,4 @@ def estimate_fare(
         "distance_km": round(distance, 2),
         "fare": round(fare, 2),
     }
+
