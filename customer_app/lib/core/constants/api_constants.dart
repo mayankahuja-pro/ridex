@@ -11,8 +11,7 @@ class ApiConstants {
   static const String fcmToken = "notifications/token";
   static const String payments = "payments";
   static const String ratings = "ratings";
-  static const String rideHistory =
-    "/rides/history";
+  static const String rideHistory ="rides/history";
 
 
 }
