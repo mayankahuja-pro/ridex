@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_role
+from app.core.dependencies import get_current_user, require_role
+from app.models.rating import Rating
 from app.models.ride import Ride
 from app.models.user import User
 from app.schemas.rating import (
@@ -18,32 +19,50 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "",
-    response_model=RatingResponse,
-)
+@router.post("")
 def create_rating(
     data: RatingCreate,
     current_user: User = Depends(
-        require_role("customer")
+        get_current_user
     ),
     db: Session = Depends(get_db),
 ):
+    if data.rating < 1 or data.rating > 5:
+        raise HTTPException(
+            status_code=400,
+            detail="Rating must be between 1 and 5",
+        )
 
     ride = db.get(Ride, data.ride_id)
 
     if not ride:
-        from fastapi import HTTPException
-
         raise HTTPException(
             status_code=404,
             detail="Ride not found",
         )
 
-    service = RatingService(db)
+    if ride.customer_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not your ride",
+        )
 
-    return service.create_rating(
+    if ride.status != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail="Ride not completed",
+        )
+
+    rating = Rating(
+        ride_id=ride.id,
         customer_id=current_user.id,
-        ride=ride,
-        rating_value=data.rating,
+        driver_id=ride.driver_id,
+        rating=data.rating,
+        comment=data.comment,
     )
+
+    db.add(rating)
+    db.commit()
+    db.refresh(rating)
+
+    return rating

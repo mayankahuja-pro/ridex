@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer,String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -32,7 +32,11 @@ class Rating(Base):
         Integer,
         nullable=False,
     )
-
+    comment: Mapped[str | None] = mapped_column(
+            String(500),
+            nullable=True,
+        )
+    
     ride = relationship(
         "Ride",
         back_populates="rating",
