@@ -44,7 +44,7 @@ app.include_router(websocket_router)
 app.include_router(payment_router)
 app.include_router(rating_router)
 app.include_router(notification_router)
-Base.metadata.create_all(bind=engine)
+
 
  
 

@@ -10,3 +10,7 @@ class PaymentResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class PaymentCreate(BaseModel):
+    method: str = "cash"
