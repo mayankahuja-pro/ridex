@@ -10,6 +10,7 @@ import '../../models/ride.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/websocket_service.dart';
+import 'ride_completed_screen.dart';
 
 class RideTrackingScreen extends StatefulWidget {
   final Ride ride;
@@ -34,6 +35,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   StreamSubscription<Map<String, dynamic>>? _subscription;
 
   late String rideStatus;
+  bool _completionNavigationStarted = false;
 
   LatLng? driverLocation;
 
@@ -84,9 +86,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
       if (!mounted) return;
 
-      setState(() {
-        rideStatus = ride.status;
-      });
+      updateRideStatus(ride.status, ride: ride);
     } catch (e) {
       debugPrint("Failed to refresh ride status: $e");
     }
@@ -164,13 +164,32 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       return;
     }
 
+    updateRideStatus(status);
+
+    debugPrint("Ride status: $status");
+  }
+
+  void updateRideStatus(String status, {Ride? ride}) {
     if (!mounted) return;
 
     setState(() {
       rideStatus = status;
     });
 
-    debugPrint("Ride status: $status");
+    if (status.toLowerCase() != "completed" ||
+        _completionNavigationStarted) {
+      return;
+    }
+
+    _completionNavigationStarted = true;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RideCompletedScreen(
+          ride: ride ?? widget.ride,
+        ),
+      ),
+    );
   }
 
   String getStatusTitle() {

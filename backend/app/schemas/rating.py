@@ -7,6 +7,7 @@ class RatingCreate(BaseModel):
         ge=1,
         le=5,
     )
+    comment: str | None = None
 
 
 class RatingResponse(BaseModel):

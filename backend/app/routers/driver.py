@@ -1,4 +1,10 @@
-from fastapi import APIRouter, Depends, status
+
+
+from app.models.driver import Driver
+from app.models.ride import Ride
+from app.schemas.ride import RideResponse
+from fastapi import APIRouter, Depends, status, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -85,4 +91,79 @@ def update_location(
 
     return {
         "message": "Location updated"
+    }
+
+# 
+@router.get(
+    "/rides/history",
+    response_model=list[RideResponse],
+)
+def driver_ride_history(
+    current_user: User = Depends(
+        require_role("driver")
+    ),
+    db: Session = Depends(get_db),
+):
+    driver = db.scalar(
+        select(Driver).where(
+            Driver.user_id == current_user.id
+        )
+    )
+
+    if not driver:
+        raise HTTPException(
+            status_code=404,
+            detail="Driver profile not found",
+        )
+
+    rides = (
+        db.query(Ride)
+        .filter(
+            Ride.driver_id == driver.id,
+            Ride.status == "completed",
+        )
+        .order_by(
+            Ride.id.desc()
+        )
+        .all()
+    )
+
+    return rides
+
+@router.get("/earnings")
+def driver_earnings(
+    current_user: User = Depends(
+        require_role("driver")
+    ),
+    db: Session = Depends(get_db),
+):
+    driver = db.scalar(
+        select(Driver).where(
+            Driver.user_id == current_user.id
+        )
+    )
+
+    if not driver:
+        raise HTTPException(
+            status_code=404,
+            detail="Driver not found",
+        )
+
+    rides = (
+        db.query(Ride)
+        .filter(
+            Ride.driver_id == driver.id,
+            Ride.status == "completed",
+        )
+        .all()
+    )
+
+    total = sum(
+        float(ride.fare)
+        for ride in rides
+    )
+
+    return {
+        "total_earnings": total,
+        "completed_rides": len(rides),
     }
