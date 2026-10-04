@@ -5,7 +5,21 @@ RideX is a full-stack ride-hailing platform inspired by modern services such as 
 The project focuses on real-world backend engineering concepts including JWT authentication, PostgreSQL, Redis GEO-based driver discovery, real-time WebSockets, Firebase Cloud Messaging, ride state management, concurrency control, payments, ratings, and live driver tracking.
 
 ---
+
+
+✦ rideX — Mobile Experience
+
+A seamless ride-booking experience, beautifully designed for riders and drivers.
+
+👤 User App
+<p align="center"> <img src="https://github.com/user-attachments/assets/168a45f3-9924-4972-bf80-5b9312c6d5ea" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/69775e8c-16a7-485d-9afa-80f976ab0821" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/5a657301-7729-46bf-a41d-4f3cb8153362" width="210" /> </p> <p align="center"> <img src="https://github.com/user-attachments/assets/8a502888-5f9c-4c06-81a6-ef483ea69af7" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/3d2ad88b-0898-4683-9584-59c050e5e323" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/c7fe31c1-65ad-4510-8785-b602571c00c5" width="210" /> </p> <p align="center"> <img src="https://github.com/user-attachments/assets/cebae182-5508-4120-aff8-72bed1fecdc7" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/755f557c-7798-453c-a3fb-f6a9a40c19ac" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/c7294d43-8b60-492a-92f0-c7db68963d85" width="210" /> </p>
+🚘 Driver App
+<p align="center"> <img src="https://github.com/user-attachments/assets/1e752d17-72d8-431b-bea7-878d2dcc4802" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/1f6f8643-ab16-4cee-b643-1ebc722bad3e" width="210" /> &nbsp;&nbsp; <img src="https://github.com/user-attachments/assets/445e947c-61e9-4305-af07-bf7bfd9e1416" width="210" /> </p> <p align="center"> <img src="https://github.com/user-attachments/assets/7a2d03bf-13f9-4038-95ab-fd8bf243a362" width="210" /> </p>
+<p align="center"> <sub>✦ Designed with simplicity. Built for seamless mobility. ✦</sub> </p>
+
+## api Docs
 <img width="819" height="805" alt="image" src="https://github.com/user-attachments/assets/22da3aae-d668-427c-804c-8aa35f706f79" />
+
 
 ## Overview
 
