@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import 'auth/login_screen.dart';
-import 'home/driver_home_screen.dart';
+import 'home/driver_main_screen.dart';
+// import 'home/driver_home_screen.dart';
 // import '../services/notification_service.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,8 +38,11 @@ class _SplashScreenState
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const DriverHomeScreen(),
+          builder: (_) => const DriverMainScreen(),
         ),
+        // MaterialPageRoute(
+        //   builder: (_) => const DriverHomeScreen(),
+        // ),
       );
     } else {
       Navigator.pushReplacement(
