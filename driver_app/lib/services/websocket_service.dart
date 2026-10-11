@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import '/core/constants/api_constants.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketService {
@@ -14,7 +14,7 @@ class WebSocketService {
   void connect(int userId) {
     _channel = WebSocketChannel.connect(
       Uri.parse(
-        "ws://127.0.0.1:8000/ws/$userId",
+        "ws://${ApiConstants.baseUrl}/ws/$userId",
       ),
     );
   }
