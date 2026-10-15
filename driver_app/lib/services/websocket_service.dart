@@ -12,11 +12,20 @@ class WebSocketService {
       );
 
   void connect(int userId) {
-    _channel = WebSocketChannel.connect(
-      Uri.parse(
-        "ws://${ApiConstants.baseUrl}/ws/$userId",
-      ),
+    final apiUri = Uri.parse(ApiConstants.baseUrl);
+    final websocketScheme = switch (apiUri.scheme) {
+      "https" => "wss",
+      "http" => "ws",
+      _ => throw ArgumentError(
+          "API base URL must use http or https: ${apiUri.scheme}",
+        ),
+    };
+    final websocketUri = apiUri.replace(
+      scheme: websocketScheme,
+      path: "/ws/$userId",
     );
+
+    _channel = WebSocketChannel.connect(websocketUri);
   }
 
   void sendDriverLocation({
