@@ -10,7 +10,7 @@ class WebSocketService {
         (message) =>
             jsonDecode(message) as Map<String, dynamic>,
       );
-
+// connect to websocket with userId
   void connect(int userId) {
     final apiUri = Uri.parse(ApiConstants.baseUrl);
     final websocketScheme = switch (apiUri.scheme) {

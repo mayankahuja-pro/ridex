@@ -9,7 +9,7 @@ class RatingScreen extends StatefulWidget {
   const RatingScreen({
     super.key,
     required this.ride,
-  });
+  }); 
 
   @override
   State<RatingScreen> createState() =>

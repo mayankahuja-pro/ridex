@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
 class ApiService {
+
+// post request with optional token
   Future<http.Response> post(
     String endpoint,
     Map<String, dynamic> body, {
@@ -23,7 +25,7 @@ class ApiService {
       body: jsonEncode(body),
     );
   }
-
+// get request with optional token
   Future<http.Response> get(
     String endpoint, {
     String? token,
@@ -42,7 +44,7 @@ class ApiService {
     );
   }
 
-
+// get list of data from endpoint with optional token
   Future<List<dynamic>> getList(
   String endpoint, {
   String? token,

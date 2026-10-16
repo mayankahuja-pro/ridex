@@ -16,8 +16,6 @@ import '../../services/auth_service.dart';
 class BookingScreen extends StatefulWidget {
   final Position currentPosition;
 
-  
-
   const BookingScreen({
     super.key,
     required this.currentPosition,
