@@ -21,7 +21,8 @@ class DriverHomeScreen extends StatefulWidget {
   State<DriverHomeScreen> createState() => _DriverHomeScreenState();
 }
 
-class _DriverHomeScreenState extends State<DriverHomeScreen> {
+class _DriverHomeScreenState extends State<DriverHomeScreen>
+    with WidgetsBindingObserver {
   bool isOnline = false;
 
   final ApiService apiService = ApiService();
@@ -41,7 +42,15 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
     loadDriverProfile();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      loadDriverProfile();
+    }
   }
 
   void stopLocationTracking() {
@@ -267,6 +276,7 @@ void handleMessage(Map<String, dynamic> message) {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      final wasOnline = isOnline;
 
       debugPrint("🔵 Decoded profile: $data");
       debugPrint("🔵 Driver ID from API: ${data["id"]}");
@@ -283,8 +293,10 @@ void handleMessage(Map<String, dynamic> message) {
       debugPrint("✅ driverId after setState: $driverId");
       debugPrint("✅ isOnline: $isOnline");
 
-      if (isOnline) {
+      if (isOnline && (!wasOnline || locationSubscription == null)) {
         startLocationTracking();
+      } else if (!isOnline && wasOnline) {
+        stopLocationTracking();
       }
     } else {
       debugPrint(
@@ -313,6 +325,7 @@ void handleMessage(Map<String, dynamic> message) {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     locationSubscription?.cancel();
     webSocketSubscription?.cancel();
 

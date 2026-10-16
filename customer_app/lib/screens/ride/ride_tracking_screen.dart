@@ -16,18 +16,14 @@ class RideTrackingScreen extends StatefulWidget {
   final Ride ride;
   final String? initialStatus;
 
-  const RideTrackingScreen({
-    super.key,
-    required this.ride,
-    this.initialStatus,
-  });
+  const RideTrackingScreen({super.key, required this.ride, this.initialStatus});
 
   @override
-  State<RideTrackingScreen> createState() =>
-      _RideTrackingScreenState();
+  State<RideTrackingScreen> createState() => _RideTrackingScreenState();
 }
 
-class _RideTrackingScreenState extends State<RideTrackingScreen> {
+class _RideTrackingScreenState extends State<RideTrackingScreen>
+    with WidgetsBindingObserver {
   final WebSocketService _webSocketService = WebSocketService();
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
@@ -43,9 +39,17 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
     rideStatus = widget.initialStatus ?? widget.ride.status;
 
     connectWebSocket();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      refreshRideStatus();
+    }
   }
 
   Future<void> connectWebSocket() async {
@@ -99,9 +103,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     // Driver live location
     // ------------------------------------------------------------
     if (messageType == "driver_location") {
-      final rideId = int.tryParse(
-        message["ride_id"]?.toString() ?? "",
-      );
+      final rideId = int.tryParse(message["ride_id"]?.toString() ?? "");
 
       if (rideId != null && rideId != widget.ride.id) {
         return;
@@ -114,13 +116,9 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
         return;
       }
 
-      final latitude = double.tryParse(
-        latitudeValue.toString(),
-      );
+      final latitude = double.tryParse(latitudeValue.toString());
 
-      final longitude = double.tryParse(
-        longitudeValue.toString(),
-      );
+      final longitude = double.tryParse(longitudeValue.toString());
 
       if (latitude == null || longitude == null) {
         return;
@@ -129,15 +127,10 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       if (!mounted) return;
 
       setState(() {
-        driverLocation = LatLng(
-          latitude,
-          longitude,
-        );
+        driverLocation = LatLng(latitude, longitude);
       });
 
-      debugPrint(
-        "Driver location updated: $latitude, $longitude",
-      );
+      debugPrint("Driver location updated: $latitude, $longitude");
 
       return;
     }
@@ -145,14 +138,11 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     // ------------------------------------------------------------
     // Ride status
     // ------------------------------------------------------------
-    if (messageType != "ride_accepted" &&
-        messageType != "ride_status") {
+    if (messageType != "ride_accepted" && messageType != "ride_status") {
       return;
     }
 
-    final rideId = int.tryParse(
-      message["ride_id"]?.toString() ?? "",
-    );
+    final rideId = int.tryParse(message["ride_id"]?.toString() ?? "");
 
     if (rideId != widget.ride.id) {
       return;
@@ -176,8 +166,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       rideStatus = status;
     });
 
-    if (status.toLowerCase() != "completed" ||
-        _completionNavigationStarted) {
+    if (status.toLowerCase() != "completed" || _completionNavigationStarted) {
       return;
     }
 
@@ -185,9 +174,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => RideCompletedScreen(
-          ride: ride ?? widget.ride,
-        ),
+        builder: (_) => RideCompletedScreen(ride: ride ?? widget.ride),
       ),
     );
   }
@@ -244,6 +231,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _subscription?.cancel();
     _webSocketService.disconnect();
 
@@ -252,15 +240,10 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pickupLocation = LatLng(
-      widget.ride.pickupLat,
-      widget.ride.pickupLng,
-    );
+    final pickupLocation = LatLng(widget.ride.pickupLat, widget.ride.pickupLng);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Ride #${widget.ride.id}"),
-      ),
+      appBar: AppBar(title: Text("Ride #${widget.ride.id}")),
       body: Column(
         children: [
           // ------------------------------------------------------
@@ -275,8 +258,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.ridex.customer',
                 ),
 
@@ -323,10 +305,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                 children: [
                   const SizedBox(height: 10),
 
-                  Icon(
-                    getStatusIcon(),
-                    size: 60,
-                  ),
+                  Icon(getStatusIcon(), size: 60),
 
                   const SizedBox(height: 16),
 
@@ -343,9 +322,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
                   Text(
                     "Status: $rideStatus",
-                    style: const TextStyle(
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(fontSize: 16),
                   ),
 
                   const SizedBox(height: 24),
@@ -354,11 +331,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.circle,
-                          color: Colors.green,
-                          size: 10,
-                        ),
+                        Icon(Icons.circle, color: Colors.green, size: 10),
                         SizedBox(width: 6),
                         Text(
                           "Driver location is live",
@@ -382,18 +355,14 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                         SizedBox(width: 6),
                         Text(
                           "Waiting for driver location...",
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
 
                   const SizedBox(height: 24),
 
-                  RideStatusTimeline(
-                    currentStatus: rideStatus,
-                  ),
+                  RideStatusTimeline(currentStatus: rideStatus),
 
                   const SizedBox(height: 24),
 
@@ -419,10 +388,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 class RideStatusTimeline extends StatelessWidget {
   final String currentStatus;
 
-  const RideStatusTimeline({
-    super.key,
-    required this.currentStatus,
-  });
+  const RideStatusTimeline({super.key, required this.currentStatus});
 
   static const List<String> statuses = [
     "accepted",
@@ -459,58 +425,49 @@ class RideStatusTimeline extends StatelessWidget {
     final currentIndex = statuses.indexOf(currentStatus);
 
     return Column(
-      children: List.generate(
-        statuses.length,
-        (index) {
-          final isCompleted = currentIndex >= index;
-          final isLast = index == statuses.length - 1;
+      children: List.generate(statuses.length, (index) {
+        final isCompleted = currentIndex >= index;
+        final isLast = index == statuses.length - 1;
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  Icon(
-                    isCompleted
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    color: isCompleted
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              children: [
+                Icon(
+                  isCompleted
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: isCompleted ? Colors.green : Colors.grey,
+                ),
+
+                if (!isLast)
+                  Container(
+                    width: 2,
+                    height: 30,
+                    color: currentIndex > index
                         ? Colors.green
-                        : Colors.grey,
+                        : Colors.grey.shade300,
                   ),
+              ],
+            ),
 
-                  if (!isLast)
-                    Container(
-                      width: 2,
-                      height: 30,
-                      color: currentIndex > index
-                          ? Colors.green
-                          : Colors.grey.shade300,
-                    ),
-                ],
-              ),
+            const SizedBox(width: 12),
 
-              const SizedBox(width: 12),
-
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  getLabel(statuses[index]),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isCompleted
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                    color: isCompleted
-                        ? Colors.black
-                        : Colors.grey,
-                  ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                getLabel(statuses[index]),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
+                  color: isCompleted ? Colors.black : Colors.grey,
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+      }),
     );
   }
 }
